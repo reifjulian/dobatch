@@ -8,7 +8,6 @@ program define dobatch
 *   DOBATCH_MAX_STATA_JOBS
 *   DOBATCH_WAIT_TIME_MINS
 
-
 	* If dobatch is disabled, just run the dofile as normal
 	if `"$DOBATCH_DISABLE"'=="1" {
 		do `0'
@@ -50,7 +49,7 @@ program define dobatch
 	local WAIT_TIME_MINS = 5
 	
 	* The default values above can be overriden by pre-specified globals
-	foreach param in MIN_CPUS_AVAILABLE DOBATCH_MAX_STATA_JOBS DOBATCH_WAIT_TIME_MINS {
+	foreach param in MIN_CPUS_AVAILABLE MAX_STATA_JOBS WAIT_TIME_MINS {
 		if !mi(`"${DOBATCH_`param'}"') {
 			cap confirm number ${DOBATCH_`param'}
 			if _rc {
@@ -59,7 +58,7 @@ program define dobatch
 			}		
 			local `param' = ${DOBATCH_`param'}
 			
-			if "`param'"=="DOBATCH_WAIT_TIME_MINS" noi di as text "Wait time set to " as result "`wait_time_mins'" as text " minutes"
+			if "`param'"=="WAIT_TIME_MINS" noi di as text "Wait time set to " as result "`WAIT_TIME_MINS'" as text " minutes"
 		}		
 	}
 	noi di as text _n "Required minimum available CPUs: " as result `MIN_CPUS_AVAILABLE'
@@ -81,7 +80,9 @@ program define dobatch
 		* SO FAR: aws -v... and sh -c... are confirmed to work on finance server
 		*shell awk -v c=$(nproc) '{print c - $1}' <(uptime | awk -F'load average: ' '{print $2}' | awk '{print $1}' | tr -d ',') > `t'
 		*shell awk 'BEGIN {print '"$(nproc)"' - '"$(uptime | sed 's/.*load average: //' | cut -d',' -f1)"'}' > `t'
-		qui shell sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
+		*qui shell sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
+		qui shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
+
 		file open myfile using `t', read
 		file read myfile line
 		file close myfile
@@ -89,7 +90,8 @@ program define dobatch
 		noi di _n "Available CPUs at $S_TIME: `free_cpus'"
 		
 		* Check number of running stata-mp processes
-		qui shell pgrep -c stata-mp > `t'
+		*qui shell pgrep -c stata-mp > `t'
+		qui shell rm -f `t' && pgrep -c stata-mp > `t'
 		file open myfile using `t', read
 		file read myfile line
 		file close myfile
@@ -106,7 +108,8 @@ program define dobatch
 		
 	* Run Stata MP in Unix batch mode
 	local prefix "shell nohup stata-mp -b do"
-	local suffix "> /dev/null 2>&1 &"
+	*local suffix "> /dev/null 2>&1 &"
+	local suffix ">& /dev/null </dev/null &"
 	
 	noi di _n `"`prefix' \"`dofile'\" `0' `suffix'"'
 	`prefix' \"`dofile'\" `0' `suffix'
