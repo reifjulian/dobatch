@@ -8,6 +8,9 @@ tempfile t results
 version 18
 program drop _all
 
+cap rm test1.log
+cap rm test2.log
+
 global DOBATCH_MAX_STATA_JOBS
 global DOBATCH_WAIT_TIME_MINS
 
@@ -35,6 +38,14 @@ dobatch dofile1.do
 dobatch dofile1.do
 
 * Add error handling for options such as , nostop
+dobatch dofile2.do
+sleep 1000
+cap confirm file test2.log
+assert _rc==601
+
+dobatch dofile2.do, nostop
+sleep 1000
+confirm file test2.log
 
 ** EOF
 

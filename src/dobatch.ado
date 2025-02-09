@@ -1,4 +1,4 @@
-*! dobatch 1.0 5feb2025 by Julian Reif
+*! dobatch 1.0 8feb2025 by Julian Reif
 
 program define dobatch
 
@@ -15,8 +15,8 @@ program define dobatch
 	}
 	
 	* First argument must be dofilename, followed by optional arguments
-	assert !mi(`"`0'"')
-	gettoken dofile 0 : 0
+	syntax anything [, nostop]
+	gettoken dofile args : anything
 	cap confirm file "`dofile'"
 	if _rc cap confirm file "`dofile'.do"
 	if _rc confirm file "`dofile'"
@@ -48,7 +48,7 @@ program define dobatch
 	* Default wait time is 5 minutes
 	local WAIT_TIME_MINS = 5
 	
-	* The default values above can be overriden by pre-specified globals
+	* The default values above can be overriden by user-defined global macros
 	foreach param in MIN_CPUS_AVAILABLE MAX_STATA_JOBS WAIT_TIME_MINS {
 		if !mi(`"${DOBATCH_`param'}"') {
 			cap confirm number ${DOBATCH_`param'}
@@ -61,8 +61,8 @@ program define dobatch
 			if "`param'"=="WAIT_TIME_MINS" noi di as text "Wait time set to " as result "`WAIT_TIME_MINS'" as text " minutes"
 		}		
 	}
-	noi di as text _n "Required minimum available CPUs: " as result `MIN_CPUS_AVAILABLE'
-	noi di as text "Maximum concurrent Stata jobs: " as result `MAX_STATA_JOBS'
+	noi di as text _n "Minimum required available CPUs: " as result `MIN_CPUS_AVAILABLE'
+	noi di as text "Maximum number of active Stata jobs allowed: " as result `MAX_STATA_JOBS'
 		
 	* If check_cpus=1, wait until there are (1) at least MIN_CPUS_AVAILABLE cpu's available; and (2) less than MAX_STATA_JOBS active Stata processes
 	*   - If wait time is non-positive, skip this code (ie, set check_cpus = 0)
@@ -110,9 +110,10 @@ program define dobatch
 	local prefix "shell nohup stata-mp -b do"
 	*local suffix "> /dev/null 2>&1 &"
 	local suffix ">& /dev/null </dev/null &"
+	if !mi("`stop'") local stop ", `stop'"
 	
-	noi di _n `"`prefix' \"`dofile'\" `0' `suffix'"'
-	`prefix' \"`dofile'\" `0' `suffix'
+	noi di _n `"`prefix' \"`dofile'\" `args' `stop' `suffix'"'
+	`prefix' \"`dofile'\" `args' `stop' `suffix'
 end
 
 ** EOF
