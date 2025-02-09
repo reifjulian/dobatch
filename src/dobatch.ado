@@ -1,6 +1,6 @@
-*! dobatch 1.0 8feb2025 by Julian Reif
+*! dobatch 1.0 9feb2025 by Julian Reif
 
-program define dobatch
+program define dobatch, rclass
 
 * Optional params for dobatch are specified in the following globals:
 *   DOBATCH_DISABLE
@@ -114,6 +114,11 @@ program define dobatch
 	
 	noi di _n `"`prefix' \"`dofile'\" `args' `stop' `suffix'"'
 	`prefix' \"`dofile'\" `args' `stop' `suffix'
+	
+	* Return parameter values
+	return scalar MIN_CPUS_AVAILABLE = `MIN_CPUS_AVAILABLE'
+	return scalar MAX_STATA_JOBS = `MAX_STATA_JOBS'
+	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'
 end
 
 ** EOF

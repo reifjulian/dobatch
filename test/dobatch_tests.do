@@ -24,28 +24,31 @@ if c(os)=="Windows" {
 	dobatch dofile1.do
 }
 
-global DOBATCH_WAIT_TIME_MINS = 0.1
-dobatch dofile1.do
-dobatch dofile1.do
-dobatch dofile1.do
-dobatch dofile1.do
-dobatch dofile1.do
-dobatch dofile1.do
-dobatch dofile1.do
+else {
+	global DOBATCH_WAIT_TIME_MINS = 0.1
+	dobatch dofile1.do
+	dobatch dofile1.do
+	dobatch dofile1.do
+	dobatch dofile1.do
+	dobatch dofile1.do
+	dobatch dofile1.do
+	dobatch dofile1.do
 
-global DOBATCH_MAX_STATA_JOBS = 8
-dobatch dofile1.do
-dobatch dofile1.do
+	global DOBATCH_MAX_STATA_JOBS = 8
+	dobatch dofile1.do
+	dobatch dofile1.do
 
-* Add error handling for options such as , nostop
-dobatch dofile2.do
-sleep 1000
-cap confirm file test2.log
-assert _rc==601
+	* Add error handling for options such as , nostop
+	dobatch dofile2.do
+	sleep 1000
+	cap confirm file test2.log
+	assert _rc==601
 
-dobatch dofile2.do, nostop
-sleep 1000
-confirm file test2.log
-
+	dobatch dofile2.do, nostop
+	sleep 1000
+	confirm file test2.log
+	
+	assert r(MAX_STATA_JOBS)==8
+}
 ** EOF
 
