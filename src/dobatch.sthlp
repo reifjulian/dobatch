@@ -3,7 +3,7 @@
 {hline}
 {title:Title}
 
-{p 4 4 2}{cmd:dobatch} {hline 2} Run a do-file in batch mode in the background.
+{p 4 4 2}{cmd:dobatch} {hline 2} Launch a do-file as a background batch process.
 
 
 {title:Syntax}
@@ -17,10 +17,10 @@
 
 {title:Description}
 
-{p 4 4 2}{cmd:dobatch} runs {it:filename} in batch mode in the background, allowing multiple do-files to execute in parallel.
+{p 4 4 2}{cmd:dobatch} runs {it:filename} as a background batch process, allowing multiple do-files to execute in parallel.
 It requires Stata MP and a Unix-based system.
 Before execution, {cmd:dobatch} monitors system resources to ensure sufficient CPU availability and to prevent an excessive number of active Stata processes.
-Specifically, {cmd:dobatch} waits to run the do-file until there are enough free CPU cores and no more than a certain number of active Stata jobs.
+Specifically, {cmd:dobatch} waits to run the do-file until there are enough free CPU processors and no more than a certain number of active Stata jobs.
 If the system is busy, {cmd:dobatch} waits for 5 minutes and then checks the system resources again.
 The default requirements for system resources are calculated as follows:
 
@@ -29,7 +29,7 @@ The default requirements for system resources are calculated as follows:
 {p 8 14 2}{it:MAX_STATA_JOBS} = c(processors_mach) / c(processors_lic) + 1
 
 {p 4 4 2}For example, suppose you are running Stata MP 8 on a server with 64 processors. 
-{cmd:dobatch} will not run the do-file until there are at least 7 available cores and fewer than 9 active Stata MP processes.
+{cmd:dobatch} will not launch the do-file until there are at least 7 available processors and fewer than 9 active Stata MP processes.
 
 
 {title:Options}
