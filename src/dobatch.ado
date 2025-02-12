@@ -128,15 +128,16 @@ program define dobatch, rclass
 	}
 		
 	* Run Stata MP in Unix batch mode
-	local prefix "shell nohup stata-mp -b do"
+	local prefix "nohup stata-mp -b do"
 	*local suffix "> /dev/null 2>&1 &"
 	*local suffix "> /dev/null 2>&1 < /dev/null &"
-	local suffix ">& /dev/null </dev/null &"
+	* local suffix ">& /dev/null </dev/null &"
+	local suffix ">/dev/null 2>&1 </dev/null &"
 
 	if !mi("`stop'") local stop ", `stop' "
 	
-	noi di _n `"`prefix' \"`dofile'\" `args'`stop'`suffix'"'
-	`prefix' \"`dofile'\" `args'`stop'`suffix'
+	noi di _n `"sh -c '`prefix' \"`dofile'\" `args'`stop'`suffix''"'
+	shell sh -c '`prefix' \"`dofile'\" `args'`stop'`suffix''
 	
 	* Return parameter values
 	return local shell "`shell'"
