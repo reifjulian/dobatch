@@ -1,5 +1,8 @@
 *! dobatch 1.0 12feb2025 by Julian Reif
 
+* TO DO: add test case with an argument. Requires that we have space between `args' and what follows
+* e.g., must be "`args' `stop'`suffix'" not "`args'`stop'`suffix'"
+
 program define dobatch, rclass
 
 * Optional params for dobatch are specified in the following globals:
@@ -136,8 +139,8 @@ program define dobatch, rclass
 
 	if !mi("`stop'") local stop ", `stop' "
 	
-	noi di _n `"sh -c '`prefix' \"`dofile'\" `args'`stop'`suffix''"'
-	shell sh -c '`prefix' \"`dofile'\" `args'`stop'`suffix''
+	noi di _n `"sh -c '`prefix' \"`dofile'\" `args' `stop'`suffix''"'
+	shell sh -c '`prefix' \"`dofile'\" `args' `stop'`suffix''
 	
 	* Return parameter values
 	return local shell "`shell'"
