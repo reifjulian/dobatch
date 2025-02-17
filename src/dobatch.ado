@@ -132,21 +132,28 @@ program define dobatch, rclass
 		}
 		else local check_cpus = 0
 	}
-		
+	
 	* Run Stata MP in Unix batch mode
+	tempname stata_pid_fh
+	tempfile stata_pid_file
 	local prefix "nohup stata-mp -b do"
-	*local suffix "> /dev/null 2>&1 &"
-	*local suffix "> /dev/null 2>&1 < /dev/null &"
-	* local suffix ">& /dev/null </dev/null &"
-	local suffix ">/dev/null 2>&1 </dev/null &"
+	local suffix "</dev/null >/dev/null 2>&1 & echo $! > `stata_pid_file'"
 
 	if !mi("`stop'") local stop ", `stop' "
 	
 	noi di _n `"sh -c '`prefix' \"`dofile'\" `args' `stop'`suffix''"'
 	shell sh -c '`prefix' \"`dofile'\" `args' `stop'`suffix''
 	
+	file open `stata_pid_fh' using `"`stata_pid_file'"', read
+	file read `stata_pid_fh' stata_pid
+	file close `stata_pid_fh'
+	local stata_pid = trim(`"`stata_pid'"')
+	cap confirm number `stata_pid'
+	if _rc local stata_pid = .
+	
 	* Return parameter values
 	return local shell "`shell'"
+	return scalar stata_pid = `stata_pid'
 	return scalar MIN_CPUS_AVAILABLE = `MIN_CPUS_AVAILABLE'
 	return scalar MAX_STATA_JOBS = `MAX_STATA_JOBS'
 	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'
