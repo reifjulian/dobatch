@@ -105,7 +105,8 @@ program define dobatch, rclass
 		*qui shell sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		*   shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(getconf _NPROCESSORS_ONLN) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		*qui shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
-		qui shell rm -f `t' && sh -c 'uptime | sed "s/.*load average: //" | cut -d"," -f1' > `t'
+		*qui shell rm -f `t' && sh -c 'uptime | sed "s/.*load average: //" | cut -d"," -f1' > `t'
+		qui shell rm -f `t' && sh -c 'LANG=C uptime | sed -E "s/.*load average[s]?: //" | cut -d"," -f1' > `t'
 
 		file open `fh' using `t', read
 		file read `fh' line
