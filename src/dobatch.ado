@@ -104,12 +104,14 @@ program define dobatch, rclass
 		*shell awk 'BEGIN {print '"$(nproc)"' - '"$(uptime | sed 's/.*load average: //' | cut -d',' -f1)"'}' > `t'
 		*qui shell sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		*   shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(getconf _NPROCESSORS_ONLN) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
-		qui shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
+		*qui shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
+		qui shell rm -f `t' && sh -c 'uptime | sed "s/.*load average: //" | cut -d"," -f1' > `t'
 
 		file open `fh' using `t', read
 		file read `fh' line
 		file close `fh'
-		local free_cpus = trim("`line'")
+		local one_min_load_avg = trim("`line'")
+		local free_cpus = `num_cpus_machine' - `one_min_load_avg'
 		noi di _n "Available CPUs at $S_TIME: `free_cpus'"
 		
 		* Check number of running stata-mp processes
