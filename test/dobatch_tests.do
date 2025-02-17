@@ -9,6 +9,7 @@ version 18
 program drop _all
 
 cap rm test1.log
+cap rm test1_myarg.log
 cap rm test2.log
 
 global DOBATCH_MAX_STATA_JOBS
@@ -37,6 +38,13 @@ else {
 	global DOBATCH_MAX_STATA_JOBS = 8
 	dobatch dofile1.do
 	dobatch dofile1.do
+	
+	sleep 1000
+	confirm file test1.log
+	
+	dobatch dofile1.do "myarg"
+	sleep 7000
+	confirm file test1_myarg.log
 
 	* Add error handling for options such as , nostop
 	dobatch dofile2.do

@@ -1,4 +1,4 @@
-
+local arg1 "`1'"
 
 
 * Sleep for 5 seconds
@@ -10,6 +10,11 @@ sysuse auto, clear
 
 log close
 
+if !mi("`arg1'") {
+	log using test1_`arg1'.log
+	sysuse auto, clear
+	log close
+}
 
 ** EOF
 
