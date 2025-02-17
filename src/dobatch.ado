@@ -1,4 +1,7 @@
-*! dobatch 1.0 9feb2025 by Julian Reif
+*! dobatch 1.0 12feb2025 by Julian Reif
+
+* TO DO: add test case with an argument. Requires that we have space between `args' and what follows
+* e.g., must be "`args' `stop'`suffix'" not "`args'`stop'`suffix'"
 
 program define dobatch, rclass
 
@@ -63,12 +66,31 @@ program define dobatch, rclass
 	}
 	noi di as text _n "Minimum required available CPUs: " as result `MIN_CPUS_AVAILABLE'
 	noi di as text "Maximum number of active Stata jobs allowed: " as result `MAX_STATA_JOBS'
+	
+	************************************************
+	* Detect shell version
+	************************************************	
+	* Syntax for the -shell- call depends on which version of the shell is running:
+	*	Unix csh:  /bin/csh
+	*	Unix tcsh: /usr/local/bin/tcsh (default on NBER server)
+	*	Unix bash: /bin/bash
+	*	Windows
+	tempname shellfh
+	tempfile shellfile
+	
+	qui shell echo "$0" > `shellfile'
+	
+	file open `shellfh' using `"`shellfile'"', read
+	file read `shellfh' shell
+	file close `shellfh'
+	local shell = trim(`"`shell'"')
 		
 	* If check_cpus=1, wait until there are (1) at least MIN_CPUS_AVAILABLE cpu's available; and (2) less than MAX_STATA_JOBS active Stata processes
 	*   - If wait time is non-positive, skip this code (ie, set check_cpus = 0)
 	local check_cpus 1
 	if `WAIT_TIME_MINS'<=0 local check_cpus = 0
 	tempfile t
+	tempname fh
 	while (`check_cpus'==1) {
 
 		* Alternative, which should work on all shells
@@ -81,20 +103,22 @@ program define dobatch, rclass
 		*shell awk -v c=$(nproc) '{print c - $1}' <(uptime | awk -F'load average: ' '{print $2}' | awk '{print $1}' | tr -d ',') > `t'
 		*shell awk 'BEGIN {print '"$(nproc)"' - '"$(uptime | sed 's/.*load average: //' | cut -d',' -f1)"'}' > `t'
 		*qui shell sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
+		*   shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(getconf _NPROCESSORS_ONLN) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		qui shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 
-		file open myfile using `t', read
-		file read myfile line
-		file close myfile
+		file open `fh' using `t', read
+		file read `fh' line
+		file close `fh'
 		local free_cpus = trim("`line'")
 		noi di _n "Available CPUs at $S_TIME: `free_cpus'"
 		
 		* Check number of running stata-mp processes
 		*qui shell pgrep -c stata-mp > `t'
+		* qui shell rm -f `t' && ps aux | grep -w stata-mp | grep -v grep | wc -l > `t'
 		qui shell rm -f `t' && pgrep -c stata-mp > `t'
-		file open myfile using `t', read
-		file read myfile line
-		file close myfile
+		file open `fh' using `t', read
+		file read `fh' line
+		file close `fh'
 		local num_stata_jobs = trim("`line'")
 		noi di "Active Stata MP jobs at $S_TIME: `num_stata_jobs'"
 		
@@ -107,15 +131,19 @@ program define dobatch, rclass
 	}
 		
 	* Run Stata MP in Unix batch mode
-	local prefix "shell nohup stata-mp -b do"
+	local prefix "nohup stata-mp -b do"
 	*local suffix "> /dev/null 2>&1 &"
-	local suffix ">& /dev/null </dev/null &"
-	if !mi("`stop'") local stop ", `stop'"
+	*local suffix "> /dev/null 2>&1 < /dev/null &"
+	* local suffix ">& /dev/null </dev/null &"
+	local suffix ">/dev/null 2>&1 </dev/null &"
+
+	if !mi("`stop'") local stop ", `stop' "
 	
-	noi di _n `"`prefix' \"`dofile'\" `args' `stop' `suffix'"'
-	`prefix' \"`dofile'\" `args' `stop' `suffix'
+	noi di _n `"sh -c '`prefix' \"`dofile'\" `args' `stop'`suffix''"'
+	shell sh -c '`prefix' \"`dofile'\" `args' `stop'`suffix''
 	
 	* Return parameter values
+	return local shell "`shell'"
 	return scalar MIN_CPUS_AVAILABLE = `MIN_CPUS_AVAILABLE'
 	return scalar MAX_STATA_JOBS = `MAX_STATA_JOBS'
 	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'
