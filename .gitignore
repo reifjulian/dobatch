@@ -3,4 +3,4 @@
 .Rhistory
 .aux
 .synctex.gz
-.log
+*.log
