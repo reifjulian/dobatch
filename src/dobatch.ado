@@ -158,4 +158,85 @@ program define dobatch, rclass
 	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'
 end
 
+
+* Helper program than waits for jobs to end. Two modes:
+*  (1) default: wait until all Stata-MP jobs end (not including this one)
+*  (2) if process ID numbers (PINs) are provided, wait until each one has ended
+program define dobatch_wait
+
+	* If dobatch is disabled, do nothing
+	if `"$DOBATCH_DISABLE"'=="1" {
+		exit
+	}
+
+	* PINs must be positive integers
+	syntax [, pin(numlist >0 integer)]
+	
+	* Default wait time is 5 minutes
+	local WAIT_TIME_MINS = 5
+	
+	* The default values above can be overriden by user-defined global macros
+	foreach param in WAIT_TIME_MINS {
+		if !mi(`"${DOBATCH_`param'}"') {
+			cap confirm number ${DOBATCH_`param'}
+			if _rc {
+				noi di as error _n "Error parsing the global variable DOBATCH_`param'"
+				confirm number ${DOBATCH_`param'}
+			}		
+			local `param' = ${DOBATCH_`param'}
+			
+			if "`param'"=="WAIT_TIME_MINS" noi di as text "Wait time set to " as result "`WAIT_TIME_MINS'" as text " minutes"
+		}		
+	}	
+	
+	***
+	* Case 1: default behavior
+	***
+	if mi("`pin'") {
+		
+		* This code repeats the usual dobatch code, except it checks only that `num_stata_jobs' > 1 and has a different message
+		local check_cpus 1
+		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
+		tempfile t
+		tempname fh
+		while (`check_cpus'==1) {
+			qui shell rm -f `t' && pgrep stata-mp | wc -l > `t'
+			file open `fh' using `t', read
+			file read `fh' line
+			file close `fh'
+			local num_stata_jobs = trim("`line'")
+					
+			* If server is busy, wait a few minutes and try again
+			if `num_stata_jobs' > 1 {
+				noi di "Waiting for active Stata MP jobs to end..."
+				sleep `=1000*60*`WAIT_TIME_MINS''
+			}
+			else local check_cpus = 0
+		}
+	}
+	
+	***
+	* Case 2: user provides PIN. TO do: parse and expand the numlist
+	***
+	else {
+		
+		local check_cpus 1
+		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
+		tempfile t
+		tempname fh
+		while (`check_cpus'==1) {
+			* shell rm -f t.txt && sh -c 'ps -p 1234,5678,91011 >/dev/null 2>&1 && touch t.txt || echo "No processes running"'
+			qui shell rm -f `t' && sh -c 'ps -p 1234,5678,91011 >/dev/null 2>&1 && touch `t' || echo "No processes running"'
+			
+			cap confirm file `t'
+			if !_rc {
+				noi di "Waiting for active Stata MP jobs to end..."
+				sleep `=1000*60*`WAIT_TIME_MINS''				
+			}
+			else local check_cpus = 0
+		}
+	}
+
+end
+
 ** EOF
