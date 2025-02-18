@@ -12,6 +12,7 @@ cap rm test1.log
 cap rm test1_myarg.log
 cap rm test2.log
 
+global DOBATCH_MIN_CPUS_AVAILABLE
 global DOBATCH_MAX_STATA_JOBS
 global DOBATCH_WAIT_TIME_MINS
 

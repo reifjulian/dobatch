@@ -1,7 +1,6 @@
-*! dobatch 1.0 12feb2025 by Julian Reif
+*! dobatch 1.0 17feb2025 by Julian Reif
 
-* TO DO: add test case with an argument. Requires that we have space between `args' and what follows
-* e.g., must be "`args' `stop'`suffix'" not "`args'`stop'`suffix'"
+* TO DO: check that "stata-mp" exists
 
 program define dobatch, rclass
 
@@ -24,9 +23,9 @@ program define dobatch, rclass
 	if _rc cap confirm file "`dofile'.do"
 	if _rc confirm file "`dofile'"
 	
-	cap assert c(os)=="Unix"
+	cap assert c(os)!="Windows"
 	if _rc {
-		noi di as error "dobatch requires Unix"
+		noi di as error "dobatch requires Unix or MacOSX"
 		exit 198
 	}
 	
@@ -106,7 +105,7 @@ program define dobatch, rclass
 		*   shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(getconf _NPROCESSORS_ONLN) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		*qui shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		*qui shell rm -f `t' && sh -c 'uptime | sed "s/.*load average: //" | cut -d"," -f1' > `t'
-		qui shell rm -f `t' && sh -c 'LANG=C uptime | sed -E "s/.*load average[s]?: //" | cut -d"," -f1' > `t'
+		qui shell rm -f `t' && sh -c 'LANG=C uptime | sed -E "s/.*load average[s]?: //" | tr -s " ," "," | cut -d"," -f1' > `t'
 
 		file open `fh' using `t', read
 		file read `fh' line
@@ -118,7 +117,7 @@ program define dobatch, rclass
 		* Check number of running stata-mp processes
 		*qui shell pgrep -c stata-mp > `t'
 		* qui shell rm -f `t' && ps aux | grep -w stata-mp | grep -v grep | wc -l > `t'
-		qui shell rm -f `t' && pgrep -c stata-mp > `t'
+		qui shell rm -f `t' && pgrep stata-mp | wc -l > `t'
 		file open `fh' using `t', read
 		file read `fh' line
 		file close `fh'
@@ -150,7 +149,7 @@ program define dobatch, rclass
 	local stata_pid = trim(`"`stata_pid'"')
 	cap confirm number `stata_pid'
 	if _rc local stata_pid = .
-	
+
 	* Return parameter values
 	return local shell "`shell'"
 	return scalar stata_pid = `stata_pid'
