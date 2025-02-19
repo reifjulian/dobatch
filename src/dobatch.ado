@@ -94,7 +94,7 @@ program define dobatch, rclass
 	cap confirm file `tmp'
 	if _rc {
 		di as error "stata-mp not found. Ensure Stata is installed and accessible from your system's PATH."
-		di as error "Try running 'which stata-mp' or 'echo $PATH' in the terminal to debug."
+		di as error "Try running 'which stata-mp' or 'echo \$PATH' in the terminal to debug."
 		exit 601
 	}
 
