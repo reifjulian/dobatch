@@ -67,7 +67,7 @@ program define dobatch, rclass
 	noi di as text "Maximum number of active Stata jobs allowed: " as result `MAX_STATA_JOBS'
 	
 	************************************************
-	* Detect shell version
+	* Detect shell version (this code could be deleted)
 	************************************************	
 	* Syntax for the -shell- call depends on which version of the shell is running:
 	*	Unix csh:  /bin/csh
@@ -83,6 +83,25 @@ program define dobatch, rclass
 	file read `fh' shell
 	file close `fh'
 	local shell = trim(`"`shell'"')
+
+	
+	************************************************
+	* Check that stata-mp is an installed application
+	************************************************
+	cap rm `tmp'
+	qui shell sh -c 'command -v stata-mp >/dev/null && touch `tmp''
+	
+	cap confirm file `tmp'
+	if _rc {
+		di as error "stata-mp not found. Ensure Stata is installed and accessible from your system's PATH."
+		di as error "Try running 'which stata-mp' or 'echo $PATH' in the terminal to debug."
+		exit 601
+	}
+
+	
+	************************************************
+	* Check server usage
+	************************************************
 		
 	* If check_cpus=1, wait until there are (1) at least MIN_CPUS_AVAILABLE cpu's available; and (2) less than MAX_STATA_JOBS active Stata processes
 	*   - If wait time is non-positive, skip this code (ie, set check_cpus = 0)
@@ -131,7 +150,9 @@ program define dobatch, rclass
 		else local check_cpus = 0
 	}
 	
+	************************************************
 	* Run Stata MP in Unix batch mode
+	************************************************	
 	tempname stata_pid_fh
 	tempfile stata_pid_file
 	local prefix "nohup stata-mp -b do"
