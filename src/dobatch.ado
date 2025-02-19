@@ -74,22 +74,20 @@ program define dobatch, rclass
 	*	Unix tcsh: /usr/local/bin/tcsh (default on NBER server)
 	*	Unix bash: /bin/bash
 	*	Windows
-	tempname shellfh
-	tempfile shellfile
+	tempname fh
+	tempfile tmp
 	
-	qui shell echo "$0" > `shellfile'
+	qui shell echo "$0" > `tmp'
 	
-	file open `shellfh' using `"`shellfile'"', read
-	file read `shellfh' shell
-	file close `shellfh'
+	file open `fh' using `"`tmp'"', read
+	file read `fh' shell
+	file close `fh'
 	local shell = trim(`"`shell'"')
 		
 	* If check_cpus=1, wait until there are (1) at least MIN_CPUS_AVAILABLE cpu's available; and (2) less than MAX_STATA_JOBS active Stata processes
 	*   - If wait time is non-positive, skip this code (ie, set check_cpus = 0)
 	local check_cpus 1
 	if `WAIT_TIME_MINS'<=0 local check_cpus = 0
-	tempfile t
-	tempname fh
 	while (`check_cpus'==1) {
 
 		* Alternative, which should work on all shells
@@ -105,9 +103,9 @@ program define dobatch, rclass
 		*   shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(getconf _NPROCESSORS_ONLN) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		*qui shell rm -f `t' && sh -c 'awk "BEGIN {print ARGV[1] - ARGV[2]}" $(nproc) $(uptime | sed "s/.*load average: //" | cut -d"," -f1)' > `t'
 		*qui shell rm -f `t' && sh -c 'uptime | sed "s/.*load average: //" | cut -d"," -f1' > `t'
-		qui shell rm -f `t' && sh -c 'LANG=C uptime | sed -E "s/.*load average[s]?: //" | tr -s " ," "," | cut -d"," -f1' > `t'
-
-		file open `fh' using `t', read
+		cap rm `tmp'
+		qui shell sh -c 'LANG=C uptime | sed -E "s/.*load average[s]?: //" | tr -s " ," "," | cut -d"," -f1' > `tmp'
+		file open `fh' using `tmp', read
 		file read `fh' line
 		file close `fh'
 		local one_min_load_avg = trim("`line'")
@@ -117,8 +115,9 @@ program define dobatch, rclass
 		* Check number of running stata-mp processes
 		*qui shell pgrep -c stata-mp > `t'
 		* qui shell rm -f `t' && ps aux | grep -w stata-mp | grep -v grep | wc -l > `t'
-		qui shell rm -f `t' && pgrep stata-mp | wc -l > `t'
-		file open `fh' using `t', read
+		cap rm `tmp'
+		qui shell pgrep stata-mp | wc -l > `tmp'
+		file open `fh' using `tmp', read
 		file read `fh' line
 		file close `fh'
 		local num_stata_jobs = trim("`line'")
@@ -187,7 +186,10 @@ program define dobatch_wait
 			
 			if "`param'"=="WAIT_TIME_MINS" noi di as text "Wait time set to " as result "`WAIT_TIME_MINS'" as text " minutes"
 		}		
-	}	
+	}
+	
+	tempfile tmp
+	tempname fh
 	
 	***
 	* Case 1: default behavior
@@ -197,11 +199,9 @@ program define dobatch_wait
 		* This code repeats the usual dobatch code, except it checks only that `num_stata_jobs' > 1 and has a different message
 		local check_cpus 1
 		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
-		tempfile t
-		tempname fh
 		while (`check_cpus'==1) {
-			qui shell rm -f `t' && pgrep stata-mp | wc -l > `t'
-			file open `fh' using `t', read
+			qui shell rm -f `tmp' && pgrep stata-mp | wc -l > `tmp'
+			file open `fh' using `tmp', read
 			file read `fh' line
 			file close `fh'
 			local num_stata_jobs = trim("`line'")
@@ -226,9 +226,9 @@ program define dobatch_wait
 		tempname fh
 		while (`check_cpus'==1) {
 			* shell rm -f t.txt && sh -c 'ps -p 1234,5678,91011 >/dev/null 2>&1 && touch t.txt || echo "No processes running"'
-			qui shell rm -f `t' && sh -c 'ps -p 1234,5678,91011 >/dev/null 2>&1 && touch `t' || echo "No processes running"'
+			qui shell rm -f `tmp' && sh -c 'ps -p 1234,5678,91011 >/dev/null 2>&1 && touch `tmp' || echo "No processes running"'
 			
-			cap confirm file `t'
+			cap confirm file `tmp'
 			if !_rc {
 				noi di "Waiting for active Stata MP jobs to end..."
 				sleep `=1000*60*`WAIT_TIME_MINS''				
