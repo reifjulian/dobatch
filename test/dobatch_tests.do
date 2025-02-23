@@ -4,7 +4,6 @@
 clear
 adopath ++"../src"
 set more off
-tempfile t results
 version 18
 program drop _all
 
@@ -27,7 +26,7 @@ if c(os)=="Windows" {
 }
 
 else {
-	global DOBATCH_WAIT_TIME_MINS = 0.1
+	global DOBATCH_WAIT_TIME_MINS = 0
 	dobatch dofile1.do
 	dobatch dofile1.do
 	dobatch dofile1.do
@@ -36,16 +35,32 @@ else {
 	dobatch dofile1.do
 	dobatch dofile1.do
 
+	global DOBATCH_WAIT_TIME_MINS = 0.1
 	global DOBATCH_MAX_STATA_JOBS = 8
 	dobatch dofile1.do
+	global DOBATCH_MAX_STATA_JOBS = 12
+
+	* dobatch_wait default: wait until all stata-mp procs finish (requires nobody else using stata-mp!)
+	rm test1.log
 	dobatch dofile1.do
-	
-	sleep 1000
+	dobatch_wait
 	confirm file test1.log
 	
+	* specify a specific PID
+	rm test1.log
+	dobatch dofile1.do
+	local pid = r(PID)
+	assert !mi(`pid')
+	dobatch_wait, pid(`pid')
+	confirm file test1.log
+	
+	* Ensure that supplying arguments works
 	dobatch dofile1.do "myarg"
-	sleep 7000
+	dobatch_wait
 	confirm file test1_myarg.log
+	
+	global DOBATCH_MAX_STATAJOBS = 1
+	dobatch dofile1.do
 
 	* Add error handling for options such as , nostop
 	dobatch dofile2.do
@@ -57,7 +72,7 @@ else {
 	sleep 1000
 	confirm file test2.log
 	
-	assert r(MAX_STATA_JOBS)==8
+	assert r(MAX_STATA_JOBS)==12
 }
 ** EOF
 

@@ -3,4 +3,5 @@ d dobatch. Run Stata dofiles in parallel.
 d Julian Reif, University of Illinois (jreif@illinois.edu)
 
 f /src/dobatch.ado
+f /src/dobatch_wait.ado
 f /src/dobatch.sthlp

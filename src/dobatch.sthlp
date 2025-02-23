@@ -26,10 +26,10 @@ The default requirements for system resources are calculated as follows:
 
 {p 8 14 2}{it:MIN_CPUS_AVAILABLE} = max(c(processors_lic) - 1, 1)
 
-{p 8 14 2}{it:MAX_STATA_JOBS} = c(processors_mach) / c(processors_lic) + 1
+{p 8 14 2}{it:MAX_STATA_JOBS} = max( floor[c(processors_mach) / c(processors_lic)] + 1, 2)
 
 {p 4 4 2}For example, suppose you are running Stata MP 8 on a server with 64 processors. 
-{cmd:dobatch} will not launch the do-file until there are at least 7 available processors and fewer than 9 active Stata MP processes.
+By default, {cmd:dobatch} will not launch the do-file until there are at least 7 available processors and fewer than 9 active Stata MP processes.
 
 
 {title:Options}
@@ -46,6 +46,21 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 {p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and active Stata jobs again
 
 {p 8 14 2} DOBATCH_DISABLE: if set equal to 1, causes {cmd:dobatch} to act like {cmd:do}
+
+
+{title:Stored results}
+
+{p 4 4 2}{cmd:dobatch} stores the following in {cmd: r()}:
+
+{p 4 4 2}Scalars
+
+{p 8 8 2}{cmd:r(MIN_CPUS_AVAILABLE)} {space 1} MIN_CPUS_AVAILABLE parameter value
+
+{p 8 8 2}{cmd:r(MAX_STATA_JOBS)}     {space 5} MAX_STATA_JOBS parameter value
+
+{p 8 8 2}{cmd:r(WAIT_TIME_MINS)}     {space 5} WAIT_TIME_MINS parameter value
+
+{p 8 8 2}{cmd:r(PID)}                {space 16} process identifier (PID) assigned by the operating system to the newly launched do‐file process
 
 
 {title:Author}
