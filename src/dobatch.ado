@@ -1,4 +1,4 @@
-*! dobatch 1.0 22feb2025 by Julian Reif
+*! dobatch 1.0 23feb2025 by Julian Reif
 
 program define dobatch, rclass
 
@@ -14,13 +14,7 @@ program define dobatch, rclass
 		exit
 	}
 	
-	* First argument must be dofilename, followed by optional arguments to the dofile
-	syntax anything [, nostop]
-	gettoken dofile args : anything
-	cap confirm file "`dofile'"
-	if _rc cap confirm file "`dofile'.do"
-	if _rc confirm file "`dofile'"
-	
+	* dobatch requires unix-based systems and Stata MP
 	cap assert c(os)!="Windows"
 	if _rc {
 		noi di as error "dobatch requires Unix or MacOSX"
@@ -32,6 +26,13 @@ program define dobatch, rclass
 		noi di as error "dobatch requires Stata MP"
 		exit 198
 	}
+	
+	* First argument must be dofilename, followed by optional arguments to the dofile
+	syntax anything [, nostop]
+	gettoken dofile args : anything
+	cap confirm file "`dofile'"
+	if _rc cap confirm file "`dofile'.do"
+	if _rc confirm file "`dofile'"	
 	
 	* Set default values for how many CPUs need to be available for max number of active Stata jobs
 	*  (1) MIN_CPUS_AVAILABLE = (# cores) - 1
@@ -89,7 +90,7 @@ program define dobatch, rclass
 
 	
 	************************************************
-	* Check that stata-mp is an installed application
+	* Confirm that stata-mp is an installed application
 	************************************************
 	cap rm `tmp'
 	qui shell sh -c 'command -v stata-mp >/dev/null && touch `tmp''
@@ -158,6 +159,7 @@ program define dobatch, rclass
 	local stata_pid = trim(`"`stata_pid'"')
 	cap confirm number `stata_pid'
 	if _rc local stata_pid = .
+	if !mi(`stata_pid') global DOBATCH_STATA_PID "$DOBATCH_STATA_PID `stata_pid'"
 
 	* Return parameter values
 	return local shell "`shell'"

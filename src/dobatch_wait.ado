@@ -1,17 +1,33 @@
-*! dobatch_wait 1.0 22feb2025 by Julian Reif
+*! dobatch_wait 1.0 23feb2025 by Julian Reif
 
 * Helper program that waits for jobs to end. Two modes:
 *  (1) default: wait until all Stata MP jobs end (excluding this one)
 *  (2) if process ID numbers (PIDs) are provided as input, wait until each one has ended
-program define dobatch_wait
+program define dobatch_wait, rclass
 
 	* If dobatch is disabled, do nothing
 	if `"$DOBATCH_DISABLE"'=="1" {
 		exit
 	}
+	
+	* dobatch_wait requires Unix-based system
+	cap assert c(os)!="Windows"
+	if _rc {
+		noi di as error "dobatch_wait requires Unix or MacOSX"
+		exit 198
+	}	
 
-	* PIDs must be positive integers
+	* PIDs must be positive integers. If not specified, pull PIDs from DOBATCH_STATA_PID
 	syntax [, pid(numlist >0 integer)]
+	if mi("`pid'") & !mi("$DOBATCH_STATA_PID") {
+		local 0 ", pid($DOBATCH_STATA_PID)"
+		cap syntax [, pid(numlist >0 integer)]
+		if _rc {
+			di as error "Error parsing the global variable DOBATCH_STATA_PID"
+			di as error "DOBATCH_STATA_PID must contain only positive integers"
+			exit 198
+		}
+	}	
 	
 	* Default wait time is 5 minutes
 	local WAIT_TIME_MINS = 5
@@ -29,7 +45,7 @@ program define dobatch_wait
 			if "`param'"=="WAIT_TIME_MINS" noi di as text "Wait time set to " as result "`WAIT_TIME_MINS'" as text " minutes"
 		}		
 	}
-	
+
 	tempfile tmp
 	tempname fh
 	
@@ -62,7 +78,7 @@ program define dobatch_wait
 	}
 	
 	***
-	* Case 2: user provides PIDs
+	* Case 2: user (or DOBATCH_STATA_PID) provides PIDs
 	***
 	else {
 		
@@ -81,6 +97,10 @@ program define dobatch_wait
 			else local check_cpus = 0
 		}
 	}
+	
+	* Return parameter values
+	global DOBATCH_STATA_PID ""
+	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'	
 
 end
 

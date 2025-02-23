@@ -8,7 +8,7 @@
 
 {title:Syntax}
 
-{p 8 14 2}{cmd:dobatch} {it:filename} [{it:arguments}] [, {bf:nostop}]
+{p 8 14 2}{cmd:dobatch} {it:filename} [{it:arguments}] [, {cmd:nostop}]
 
 {p 4 4 2}where
 
@@ -34,7 +34,7 @@ By default, {cmd:dobatch} will not launch the do-file until there are at least 7
 
 {title:Options}
 
-{p 4 4 2}{bf:nostop} allows the do-file to continue executing even if an error occurs.
+{p 4 4 2}{cmd:nostop} allows the do-file to continue executing even if an error occurs.
 Normally, Stata stops executing the do-file when it detects an error (nonzero return code).
 
 {p 4 4 2}The following global macros can be used to adjust the default settings:
@@ -43,9 +43,9 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 8 14 2} DOBATCH_MAX_STATA_JOBS: maximum number of active Stata MP jobs allowed
 
-{p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and active Stata jobs again
+{p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and active Stata jobs again. If set to 0 or less, {cmd:dobatch} does not monitor system resources.
 
-{p 8 14 2} DOBATCH_DISABLE: if set equal to 1, causes {cmd:dobatch} to act like {cmd:do}
+{p 8 14 2} DOBATCH_DISABLE: if set equal to 1, {cmd:dobatch} runs do-files like {help do:do}
 
 
 {title:Stored results}
@@ -60,7 +60,7 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 8 8 2}{cmd:r(WAIT_TIME_MINS)}     {space 5} WAIT_TIME_MINS parameter value
 
-{p 8 8 2}{cmd:r(PID)}                {space 16} process identifier (PID) assigned by the operating system to the newly launched do‐file process
+{p 8 8 2}{cmd:r(PID)}                {space 16} process identifier (PID) assigned by the operating system to the newly launched do-file process
 
 
 {title:Author}
@@ -71,6 +71,8 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 
 {title:Also see}
+
+{p 4 4 2}{help dobatch_wait:dobatch_wait}
 
 {p 4 4 2}{help rscript:rscript} (if installed)
 
