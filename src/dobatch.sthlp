@@ -20,7 +20,7 @@
 {p 4 4 2}{cmd:dobatch} runs {it:filename} as a background batch process, allowing multiple do-files to execute in parallel.
 It requires Stata MP and a Unix-based system.
 Before execution, {cmd:dobatch} monitors system resources to ensure sufficient CPU availability and to prevent an excessive number of active Stata processes.
-Specifically, {cmd:dobatch} waits to run the do-file until there are enough free CPU processors and no more than a certain number of active Stata jobs.
+Specifically, {cmd:dobatch} waits to run the do-file until there are enough free CPUs and no more than a certain number of active Stata jobs.
 If the system is busy, {cmd:dobatch} waits for 5 minutes and then checks the system resources again.
 The default requirements for system resources are calculated as follows:
 
@@ -43,7 +43,7 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 8 14 2} DOBATCH_MAX_STATA_JOBS: maximum number of active Stata MP jobs allowed
 
-{p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and active Stata jobs again. If set to 0 or less, {cmd:dobatch} does not monitor system resources.
+{p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and active Stata jobs again. If the wait time is set to 0 minutes or less, {cmd:dobatch} does not monitor system resources.
 
 {p 8 14 2} DOBATCH_DISABLE: if set equal to 1, {cmd:dobatch} runs do-files like {help do:do}
 
