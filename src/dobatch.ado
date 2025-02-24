@@ -71,24 +71,8 @@ program define dobatch, rclass
 	
 	tempname fh
 	tempfile tmp
-	
-	************************************************
-	* Detect shell version (this code could be deleted)
-	************************************************	
-	* Syntax for the -shell- call depends on which version of the shell is running:
-	*	Unix csh:  /bin/csh
-	*	Unix tcsh: /usr/local/bin/tcsh (default on NBER server)
-	*	Unix bash: /bin/bash
-	*	Windows
-	
-	qui shell echo "$0" > `tmp'
-	
-	file open `fh' using `"`tmp'"', read
-	file read `fh' shell
-	file close `fh'
-	local shell = trim(`"`shell'"')
 
-	
+
 	************************************************
 	* Confirm that stata-mp is an installed application
 	************************************************
@@ -162,7 +146,6 @@ program define dobatch, rclass
 	if !mi(`stata_pid') global DOBATCH_STATA_PID "$DOBATCH_STATA_PID `stata_pid'"
 
 	* Return parameter values
-	return local shell "`shell'"
 	return scalar PID = `stata_pid'
 	return scalar MIN_CPUS_AVAILABLE = `MIN_CPUS_AVAILABLE'
 	return scalar MAX_STATA_JOBS = `MAX_STATA_JOBS'
