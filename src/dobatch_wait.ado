@@ -96,10 +96,10 @@ program define dobatch_wait, rclass
 			}
 			else local check_cpus = 0
 		}
+		global DOBATCH_STATA_PID ""
 	}
 	
 	* Return parameter values
-	global DOBATCH_STATA_PID ""
 	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'	
 
 end
