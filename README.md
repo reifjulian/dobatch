@@ -67,7 +67,7 @@ forval x = `lower'/`upper' {
 
 ## Advanced
 
-Before execution, `dobatch` monitors system resources to ensure sufficient CPU availability and to prevent an excessive number of active Stata processes. Specifically, `dobatch` waits to run the do-file until there are enough free CPUs and no more than a certain number of active Stata jobs. If the system is busy, `dobatch` waits for 5 minutes and then checks the system resources again. The default requirements for system resources are calculated as follows:
+Before execution, `dobatch` monitors system resources to ensure sufficient CPU availability and prevent an excessive number of active Stata processes. Specifically, it delays execution until enough CPUs are free and the number of active Stata jobs remains within a set limit. If the system is busy, `dobatch` waits 5 minutes before rechecking the system resources. The default threshold are:
 
 ```stata
 MIN_CPUS_AVAILABLE = max(c(processors_lic) - 1, 1)
@@ -75,7 +75,7 @@ MIN_CPUS_AVAILABLE = max(c(processors_lic) - 1, 1)
 MAX_STATA_JOBS = max(floor(c(processors_mach) / c(processors_lic)) + 1, 2)
 ```
 
-For example, suppose you are running Stata MP 8 on a server with 64 processors. By default, `dobatch` will not launch the do-file until there are at least 7 available processors and fewer than 9 active Stata MP processes.
+For example, on a server with 64 processors running Stata MP 8, `dobatch` will not launch the do-file until at least 7 processors are available and the total number of active Stata MP jobs, *including the session calling `dobatch`*, is fewer than 9. If no other processes are running on the server, this allows up to 8 do-files to run in parallel in the background.
 
 The following global macros can be used to adjust the default settings:
 
@@ -84,7 +84,7 @@ The following global macros can be used to adjust the default settings:
 - `DOBATCH_WAIT_TIME_MINS`: Time interval (in minutes) before checking CPU availability and active Stata jobs again. If the wait time is set to 0 minutes or less, `dobatch` does not monitor system resources.
 - `DOBATCH_DISABLE`: If set to `1`, `dobatch` runs do-files like `do`
 
-### Example 1. Allowing many active Stata jobs
+**Example 1. Allowing more Stata jobs**
 
 ```stata
 
@@ -99,11 +99,12 @@ dobatch mydofile.do 76 100
 ...
 ```
 
-### Example 2. Waiting for prior jobs to complete
+**Example 2. Waiting for prior jobs to complete**
 
-`dobatch` includes a helper command, `dobatch_wait`, which pauses Stata until all previously launched `dobatch` jobs have finished. For example, if you run four do-files in parallel and want to wait until they complete before starting the next do-file, you can use `dobatch_wait`:
+The `dobatch` package includes a helper command, `dobatch_wait`, which pauses Stata until all previously launched `dobatch` jobs have finished. For example, if you are running four do-files in parallel and want to wait until they complete before starting the next do-file, you can use `dobatch_wait`:
 
 ```stata
+* Run 4 do-files in parallel, wait until they complete, then run the next script
 dobatch mydofile.do 1 25
 dobatch mydofile.do 26 50
 dobatch mydofile.do 51 75
