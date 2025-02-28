@@ -67,15 +67,15 @@ forval x = `lower'/`upper' {
 
 ## Advanced
 
-Before execution, `dobatch` monitors system resources to ensure sufficient CPU availability and prevent an excessive number of active Stata processes. Specifically, it delays execution until enough CPUs are free and the number of active Stata jobs remains within a set limit. If the system is busy, `dobatch` waits 5 minutes before rechecking the system resources. The default threshold are:
+Before execution, `dobatch` monitors system resources to ensure sufficient CPU availability and prevent an excessive number of background Stata processes. Specifically, it delays execution until enough CPUs are free and the number of background Stata jobs remains within a set limit. If the system is busy, `dobatch` waits 5 minutes before rechecking the system resources. The default threshold are:
 
 ```stata
 MIN_CPUS_AVAILABLE = max(c(processors_lic) - 1, 1)
 
-MAX_STATA_JOBS = max(floor(c(processors_mach) / c(processors_lic)) + 1, 2)
+MAX_STATA_JOBS = max(floor(c(processors_mach) / c(processors_lic)), 2)
 ```
 
-For example, on a server with 64 processors running Stata MP 8, `dobatch` will not launch the do-file until at least 7 processors are available and the total number of active Stata MP jobs, *including the session calling `dobatch`*, is fewer than 9. If no other processes are running on the server, this allows up to 8 do-files to run in parallel in the background.
+For example, on a server with 64 processors running Stata MP 8, `dobatch` will not launch the do-file until at least 7 processors are available and the total number of background Stata MP jobs is fewer than 8. If no other processes are running on the server, this allows up to 8 do-files to run in parallel in the background.
 
 The following global macros can be used to adjust the default settings:
 
@@ -122,7 +122,7 @@ No, `dobatch` monitors CPU usage and the number of active Stata MP processes to 
 
 **How can I run more Stata jobs in parallel?**
 
-Increase parallelization by setting the global variables `DOBATCH_MIN_CPUS_AVAILABLE` to a negative value and `DOBATCH_MAX_STATA_JOBS` to a larger value. See Example 1 for details.
+Increase parallelization by setting the global variables `DOBATCH_MIN_CPUS_AVAILABLE` to a negative value and `DOBATCH_MAX_STATA_JOBS` to a larger value. See Example 1 above for details.
 
 **`dobatch` is great! But sometimes I need to run my scripts on a Windows machine, and manually changing all the `dobatch` commands back to `do` again is a pain. Yes, I'm lazy.**
 

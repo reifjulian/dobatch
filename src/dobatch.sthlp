@@ -26,10 +26,10 @@ The default requirements for system resources are calculated as follows:
 
 {p 8 14 2}{it:MIN_CPUS_AVAILABLE} = max(c(processors_lic) - 1, 1)
 
-{p 8 14 2}{it:MAX_STATA_JOBS} = max( floor[c(processors_mach) / c(processors_lic)] + 1, 2)
+{p 8 14 2}{it:MAX_STATA_JOBS} = max( floor[c(processors_mach) / c(processors_lic)], 2)
 
 {p 4 4 2}For example, suppose you are running Stata MP 8 on a server with 64 processors. 
-By default, {cmd:dobatch} will not launch the do-file until there are at least 7 available processors and fewer than 9 active Stata MP processes.
+By default, {cmd:dobatch} will not launch the do-file until there are at least 7 available processors and fewer than 8 background Stata MP processes.
 
 
 {title:Options}
@@ -41,9 +41,9 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 8 14 2} DOBATCH_MIN_CPUS_AVAILABLE: minimum number of CPUs that must be free before the do-file starts
 
-{p 8 14 2} DOBATCH_MAX_STATA_JOBS: maximum number of active Stata MP jobs allowed
+{p 8 14 2} DOBATCH_MAX_STATA_JOBS: maximum number of background Stata MP jobs allowed
 
-{p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and active Stata jobs again. If the wait time is set to 0 minutes or less, {cmd:dobatch} does not monitor system resources.
+{p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and background Stata jobs again. If the wait time is set to 0 minutes or less, {cmd:dobatch} does not monitor system resources.
 
 {p 8 14 2} DOBATCH_DISABLE: if set equal to 1, {cmd:dobatch} runs do-files like {help do:do}
 

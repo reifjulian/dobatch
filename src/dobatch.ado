@@ -1,4 +1,4 @@
-*! dobatch 1.0 23feb2025 by Julian Reif
+*! dobatch 1.0 26feb2025 by Julian Reif
 
 program define dobatch, rclass
 
@@ -34,14 +34,14 @@ program define dobatch, rclass
 	if _rc cap confirm file "`dofile'.do"
 	if _rc confirm file "`dofile'"	
 	
-	* Set default values for how many CPUs need to be available for max number of active Stata jobs
-	*  (1) MIN_CPUS_AVAILABLE = (# cores) - 1
-	*  (2) MAX_STATA_JOBS = (# cores) / (# Stata-MP license cores) + 1. If <2, set to 2.
+	* Set default values for how many CPUs need to be available and for max number of active Stata jobs
+	*  (1) MIN_CPUS_AVAILABLE = (# Stata-MP license cores) - 1
+	*  (2) MAX_STATA_JOBS = (# cores) / (# Stata-MP license cores). If <2, set to 2.
 	*  Note: c(processors_mach) evaluates to missing when running non-MP Stata.
 	local num_cpus_machine = c(processors_mach)
 	local num_cpus_statamp = c(processors_lic)
 	local default_min_cpus_available = max(`num_cpus_statamp' - 1,1)
-	local default_max_stata_jobs = max(floor(`num_cpus_machine' / `num_cpus_statamp') + 1, 2)
+	local default_max_stata_jobs = max(floor(`num_cpus_machine' / `num_cpus_statamp'), 2)
 
 	local MIN_CPUS_AVAILABLE = `default_min_cpus_available'
 	local MAX_STATA_JOBS = `default_max_stata_jobs'
@@ -62,12 +62,12 @@ program define dobatch, rclass
 			if "`param'"=="WAIT_TIME_MINS" noi di as text "Wait time set to " as result "`WAIT_TIME_MINS'" as text " minutes"
 		}		
 	}
-	if `MAX_STATA_JOBS' < 2 {
-		noi di as error "DOBATCH_MAX_STATA_JOBS must be at least 2"
+	if `MAX_STATA_JOBS' < 1 {
+		noi di as error "DOBATCH_MAX_STATA_JOBS must be at least 1"
 		exit 198
 	}
 	noi di as text _n "Minimum required available CPUs: " as result `MIN_CPUS_AVAILABLE'
-	noi di as text "Maximum number of active Stata jobs allowed: " as result `MAX_STATA_JOBS'
+	noi di as text "Maximum number of background Stata jobs allowed: " as result `MAX_STATA_JOBS'
 	
 	tempname fh
 	tempfile tmp
@@ -106,13 +106,19 @@ program define dobatch, rclass
 		local free_cpus = `num_cpus_machine' - `one_min_load_avg'
 		noi di _n "Available CPUs at $S_TIME: `free_cpus'"
 		
-		* Check number of running stata-mp processes
+		* Count number of background stata-mp processes. Subtract one to exclude the parent process (this script).
 		cap rm `tmp'
 		qui shell ps aux | grep '[s]tata-mp' | wc -l > `tmp'
 		file open `fh' using `tmp', read
 		file read `fh' line
 		file close `fh'
 		local num_stata_jobs = trim("`line'")
+		cap confirm integer number `num_stata_jobs'
+		if _rc {
+			di as error "Error counting the number of background Stata processes"
+			confirm integer number `num_stata_jobs'
+		}
+		else local num_stata_jobs = `num_stata_jobs'-1
 		noi di "Active Stata MP jobs at $S_TIME: `num_stata_jobs'"
 		
 		* If server is busy, wait a few minutes and try again
