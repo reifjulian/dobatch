@@ -1,4 +1,4 @@
-*! dobatch 1.0 26feb2025 by Julian Reif
+*! dobatch 1.0 2mar2025 by Julian Reif
 
 program define dobatch, rclass
 
@@ -119,11 +119,11 @@ program define dobatch, rclass
 			confirm integer number `num_stata_jobs'
 		}
 		else local num_stata_jobs = `num_stata_jobs'-1
-		noi di "Active Stata MP jobs at $S_TIME: `num_stata_jobs'"
+		noi di "Background Stata MP jobs at $S_TIME: `num_stata_jobs'"
 		
 		* If server is busy, wait a few minutes and try again
 		if `free_cpus' < `MIN_CPUS_AVAILABLE' | `num_stata_jobs' >= `MAX_STATA_JOBS' {
-			noi di "Waiting for at least `MIN_CPUS_AVAILABLE' available CPUs and fewer than `MAX_STATA_JOBS' active Stata MP jobs..."
+			noi di "Waiting for at least `MIN_CPUS_AVAILABLE' available CPUs and fewer than `MAX_STATA_JOBS' background Stata MP jobs..."
 			sleep `=1000*60*`WAIT_TIME_MINS''
 		}
 		else local check_cpus = 0

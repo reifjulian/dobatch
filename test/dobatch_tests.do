@@ -34,6 +34,7 @@ else {
 	dobatch dofile1.do
 	dobatch dofile1.do
 	dobatch dofile1.do
+	dobatch dofile1.do
 
 	global DOBATCH_WAIT_TIME_MINS = 0.1
 	global DOBATCH_MAX_STATA_JOBS = 8

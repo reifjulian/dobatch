@@ -1,4 +1,4 @@
-*! dobatch_wait 1.0 23feb2025 by Julian Reif
+*! dobatch_wait 1.0 2mar2025 by Julian Reif
 
 * Helper program that waits for jobs to end. Two modes:
 *  (1) default: wait until all Stata MP jobs end (excluding this one)
@@ -51,7 +51,7 @@ program define dobatch_wait, rclass
 	
 	***
 	* Case 1: default behavior is waiting for all Stata jobs (except this one) to end
-	*   - Code duplicates dobatch, but checks only that `num_stata_jobs' > 1 and has different message
+	*   - Code duplicates dobatch, but checks only that `num_stata_jobs' > 0 and has different message
 	***
 	if mi("`pid'") {
 
@@ -59,18 +59,24 @@ program define dobatch_wait, rclass
 		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
 		while (`check_cpus'==1) {
 			
-			* Check number of running stata-mp processes
+			* Count number of background stata-mp processes. Subtract one to exclude the parent process (this script).
 			cap rm `tmp'
 			qui shell ps aux | grep '[s]tata-mp' | wc -l > `tmp'
 			file open `fh' using `tmp', read
 			file read `fh' line
 			file close `fh'
 			local num_stata_jobs = trim("`line'")
-			noi di "Active Stata MP jobs at $S_TIME: `num_stata_jobs'"
+			cap confirm integer number `num_stata_jobs'
+			if _rc {
+				di as error "Error counting the number of background Stata processes"
+				confirm integer number `num_stata_jobs'
+			}
+			else local num_stata_jobs = `num_stata_jobs'-1
+			noi di "Background Stata MP jobs at $S_TIME: `num_stata_jobs'"
 					
 			* If server is busy, wait a few minutes and try again
-			if `num_stata_jobs' > 1 {
-				noi di "Waiting for Stata MP jobs to end..."
+			if `num_stata_jobs' > 0 {
+				noi di "Waiting for background Stata MP jobs to end..."
 				sleep `=1000*60*`WAIT_TIME_MINS''
 			}
 			else local check_cpus = 0
@@ -91,7 +97,7 @@ program define dobatch_wait, rclass
 			
 			cap confirm file `tmp'
 			if !_rc {
-				noi di "Waiting for active Stata MP jobs to end..."
+				noi di "Waiting for background Stata MP jobs to end..."
 				sleep `=1000*60*`WAIT_TIME_MINS''				
 			}
 			else local check_cpus = 0

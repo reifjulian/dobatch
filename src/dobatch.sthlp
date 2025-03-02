@@ -62,6 +62,8 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 8 8 2}{cmd:r(PID)}                {space 16} process identifier (PID) assigned by the operating system to the newly launched do-file process
 
+{p 4 4 2}It also adds the PID to the contents of the global macro DOBATCH_STATA_PID.
+
 
 {title:Author}
 
