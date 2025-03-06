@@ -1,4 +1,4 @@
-*! dobatch 1.0 2mar2025 by Julian Reif
+*! dobatch 1.0 4mar2025 by Julian Reif
 
 program define dobatch, rclass
 
@@ -103,6 +103,12 @@ program define dobatch, rclass
 		file read `fh' line
 		file close `fh'
 		local one_min_load_avg = trim("`line'")
+		cap confirm number `one_min_load_avg'
+		if _rc {
+			di as error "Error parsing the load average:"
+			di as error `"shell sh -c 'LANG=C uptime | sed -E "s/.*load average[s]?: //" | tr -s " ," "," | cut -d"," -f1'"'
+			confirm number `one_min_load_avg'
+		}		
 		local free_cpus = `num_cpus_machine' - `one_min_load_avg'
 		noi di _n "Available CPUs at $S_TIME: `free_cpus'"
 		
@@ -115,10 +121,11 @@ program define dobatch, rclass
 		local num_stata_jobs = trim("`line'")
 		cap confirm integer number `num_stata_jobs'
 		if _rc {
-			di as error "Error counting the number of background Stata processes"
+			di as error "Error counting the number of background Stata processes:"
+			di as error `"shell ps aux | grep '[s]tata-mp' | wc -l"'
 			confirm integer number `num_stata_jobs'
 		}
-		else local num_stata_jobs = `num_stata_jobs'-1
+		local num_stata_jobs = `num_stata_jobs'-1
 		noi di "Background Stata MP jobs at $S_TIME: `num_stata_jobs'"
 		
 		* If server is busy, wait a few minutes and try again
