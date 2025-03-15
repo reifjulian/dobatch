@@ -1,15 +1,13 @@
 # DOBATCH: Run Stata do-files in parallel
 
-- Current dobatch version: `1.0 23feb2025`
+- Current dobatch version: `1.0 4mar2025`
 - Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#examples) [`advanced`](#advanced)  [`faq`](#faq) [`author`](#author)
 
 -----------
 
 ## Overview
 
-`dobatch` runs do-files in batch mode in the background, allowing multiple do-files to execute in parallel. It requires Stata MP and a Unix-based system. Before execution, `dobatch` checks server usage to ensure sufficient CPU availability and to prevent an excessive number of active Stata processes.
-
-This command is currently being beta tested.
+`dobatch` runs do-files in batch mode in the background, allowing multiple do-files to execute in parallel. It requires Stata MP and a Unix-based system, including macOS and Linux. Before execution, `dobatch` checks server usage to ensure sufficient CPU availability and to prevent an excessive number of active Stata processes.
 
 ## Quickstart
 
@@ -47,6 +45,7 @@ forval x = `lower'/`upper' {
 ```
 Then, create a master script that uses `dobatch` to run the modified do-file multiple times, distributing the workload across parallel jobs. The example below splits the loop into four Stata jobs, each handling one-quarter of the iterations:
 ```stata
+* master.do
 dobatch mydofile.do 1 25
 dobatch mydofile.do 26 50
 dobatch mydofile.do 51 75
@@ -113,6 +112,7 @@ dobatch mydofile.do 76 100
 dobatch_wait
 do nextdofile.do
 ```
+For full syntax details, type `help dobatch_wait` in Stata.
 
 ## FAQ
 
