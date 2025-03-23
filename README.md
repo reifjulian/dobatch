@@ -7,7 +7,7 @@
 
 ## Overview
 
-`dobatch` runs do-files in batch mode in the background, allowing multiple do-files to execute in parallel. It requires Stata MP and a Unix-based system, including macOS and Linux. Before execution, `dobatch` checks server usage to ensure sufficient CPU availability and to prevent an excessive number of active Stata processes.
+`dobatch` runs do-files in batch mode in the background, allowing multiple do-files to execute in parallel. It requires Stata MP and a Unix-based system, such as macOS and Linux. Before execution, `dobatch` checks server usage to ensure sufficient CPU availability and to prevent an excessive number of active Stata processes.
 
 ## Quickstart
 
@@ -52,7 +52,7 @@ dobatch mydofile.do 51 75
 dobatch mydofile.do 76 100
 ```
 
-To log the output of each job, include a `log` command in the do-file:
+In this example, `dobatch mydofile.do 1 25` passes the values `1` and `25` as arguments to `mydofile.do`, which stores them in the local macros `lower` and `upper`, respectively. To log the output of each job, include a `log` command in the do-file:
 ```stata
 * mydofile.do
 log query
@@ -66,7 +66,7 @@ forval x = `lower'/`upper' {
 
 ## Advanced
 
-Before execution, `dobatch` monitors system resources to ensure sufficient CPU availability and prevent an excessive number of background Stata processes. Specifically, it delays execution until enough CPUs are free and the number of background Stata jobs remains within a set limit. If the system is busy, `dobatch` waits 5 minutes before rechecking the system resources. The default threshold are:
+Before execution, `dobatch` monitors system resources to ensure sufficient CPU availability and prevent an excessive number of background Stata processes. Specifically, it delays execution until enough CPUs are free and the number of background Stata jobs remains within a set limit. If the system is busy, `dobatch` waits 5 minutes before rechecking the system resources. The default thresholds are:
 
 ```stata
 MIN_CPUS_AVAILABLE = max(c(processors_lic) - 1, 1)
@@ -81,7 +81,7 @@ The following global macros can be used to adjust the default settings:
 - `DOBATCH_MIN_CPUS_AVAILABLE`: Minimum number of CPUs that must be free before the do-file starts.
 - `DOBATCH_MAX_STATA_JOBS`: Maximum number of active Stata MP jobs allowed.
 - `DOBATCH_WAIT_TIME_MINS`: Time interval (in minutes) before checking CPU availability and active Stata jobs again. If the wait time is set to 0 minutes or less, `dobatch` does not monitor system resources.
-- `DOBATCH_DISABLE`: If set to `1`, `dobatch` runs do-files like `do`
+- `DOBATCH_DISABLE`: If set to `1`, `dobatch` behaves like the standard `do` command and runs the do-file in the foreground
 
 **Example 1. Allowing more Stata jobs**
 
@@ -112,17 +112,17 @@ dobatch mydofile.do 76 100
 dobatch_wait
 do nextdofile.do
 ```
-For full syntax details, type `help dobatch_wait` in Stata.
+For more details, type `help dobatch_wait` in Stata.
 
 ## FAQ
 
 **Will `dobatch` overload my server?**
 
-No, `dobatch` monitors CPU usage and the number of active Stata MP processes to prevent overloading. The default settings are conservative, but note that `dobatch` does not monitor memory usage&#8212;users are responsible for ensuring sufficient system memory.
+`dobatch` monitors CPU usage and the number of active Stata MP processes to prevent overloading. The default settings are conservative, but note that `dobatch` does not monitor memory usage&#8212;users remain responsible for ensuring sufficient system memory.
 
 **How can I run more Stata jobs in parallel?**
 
-Increase parallelization by setting the global variables `DOBATCH_MIN_CPUS_AVAILABLE` to a negative value and `DOBATCH_MAX_STATA_JOBS` to a larger value. See Example 1 above for details.
+Increase parallelization by setting the global variable `DOBATCH_MAX_STATA_JOBS` to a higher value and `DOBATCH_MIN_CPUS_AVAILABLE` to a small or negative value. This allows more jobs to launch even when CPU usage is high. See Example 1 above for details.
 
 **`dobatch` is great! But sometimes I need to run my scripts on a Windows machine, and manually changing all the `dobatch` commands back to `do` again is a pain. Yes, I'm lazy.**
 
