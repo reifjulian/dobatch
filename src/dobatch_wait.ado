@@ -1,4 +1,4 @@
-*! dobatch_wait 1.0 2mar2025 by Julian Reif
+*! dobatch_wait 1.0 28mar2025 by Julian Reif
 
 * Helper program that waits for jobs to end. Two modes:
 *  (1) default: wait until all Stata MP jobs end (excluding this one)
@@ -27,6 +27,7 @@ program define dobatch_wait, rclass
 			di as error "DOBATCH_STATA_PID must contain only positive integers"
 			exit 198
 		}
+		local pid_from_dobatch_stata_pid = 1
 	}	
 	
 	* Default wait time is 5 minutes
@@ -87,7 +88,6 @@ program define dobatch_wait, rclass
 	* Case 2: user (or DOBATCH_STATA_PID) provides PIDs
 	***
 	else {
-		
 		local check_cpus 1
 		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
 		while (`check_cpus'==1) {
@@ -102,7 +102,7 @@ program define dobatch_wait, rclass
 			}
 			else local check_cpus = 0
 		}
-		global DOBATCH_STATA_PID ""
+		if !mi("`pid_from_dobatch_stata_pid'") global DOBATCH_STATA_PID ""
 	}
 	
 	* Return parameter values

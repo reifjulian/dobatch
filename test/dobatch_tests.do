@@ -44,7 +44,9 @@ else {
 	* dobatch_wait default: wait until all stata-mp procs finish (requires nobody else using stata-mp!)
 	rm test1.log
 	dobatch dofile1.do
+	assert !mi("$DOBATCH_STATA_PID")
 	dobatch_wait
+	assert mi("$DOBATCH_STATA_PID")
 	confirm file test1.log
 	
 	* specify a specific PID
@@ -52,7 +54,9 @@ else {
 	dobatch dofile1.do
 	local pid = r(PID)
 	assert !mi(`pid')
+	assert !mi("$DOBATCH_STATA_PID")
 	dobatch_wait, pid(`pid')
+	assert !mi("$DOBATCH_STATA_PID")
 	confirm file test1.log
 	
 	* Ensure that supplying arguments works
