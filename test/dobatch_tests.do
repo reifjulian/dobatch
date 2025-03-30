@@ -78,6 +78,13 @@ else {
 	confirm file test2.log
 	
 	assert r(MAX_STATA_JOBS)==12
+	
+	* Expanding ~ to user's home directory
+	* Note: for this example to work, the /dobatch folder must be placed in user's home directory)
+	rm test1.log
+	dobatch "~/dobatch/test/dofile1.do"
+	sleep 8000
+	confirm file test1.log		
 }
 ** EOF
 
