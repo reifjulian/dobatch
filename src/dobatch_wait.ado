@@ -88,6 +88,8 @@ program define dobatch_wait, rclass
 	* Case 2: user (or DOBATCH_STATA_PID) provides PIDs
 	***
 	else {
+		noi di "Wait for the following jobs to end: `pid'" _n
+		
 		local check_cpus 1
 		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
 		while (`check_cpus'==1) {
@@ -97,7 +99,7 @@ program define dobatch_wait, rclass
 			
 			cap confirm file `tmp'
 			if !_rc {
-				noi di "Waiting for background Stata MP jobs to end..."
+				noi di "Waiting for background jobs to end..."
 				sleep `=1000*60*`WAIT_TIME_MINS''				
 			}
 			else local check_cpus = 0

@@ -157,6 +157,7 @@ program define dobatch, rclass
 	cap confirm number `stata_pid'
 	if _rc local stata_pid = .
 	if !mi(`stata_pid') global DOBATCH_STATA_PID "$DOBATCH_STATA_PID `stata_pid'"
+	global DOBATCH_STATA_PID = trim("$DOBATCH_STATA_PID")
 
 	* Return parameter values
 	return scalar PID = `stata_pid'
