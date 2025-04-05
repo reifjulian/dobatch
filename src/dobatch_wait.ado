@@ -13,7 +13,7 @@ program define dobatch_wait, rclass
 	* dobatch_wait requires Unix-based system
 	cap assert c(os)!="Windows"
 	if _rc {
-		noi di as error "dobatch_wait requires Unix or MacOSX"
+		noi di as error "dobatch_wait requires Unix or macOS"
 		exit 198
 	}	
 
