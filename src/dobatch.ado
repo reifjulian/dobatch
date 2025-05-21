@@ -8,6 +8,8 @@ program define dobatch, rclass
 *   DOBATCH_MAX_STATA_JOBS
 *   DOBATCH_WAIT_TIME_MINS
 
+	version 13.0
+
 	* If dobatch is disabled, just run the dofile as normal
 	if `"$DOBATCH_DISABLE"'=="1" {
 		do `0'

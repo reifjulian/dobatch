@@ -5,6 +5,8 @@
 *  (2) if process ID numbers (PIDs) are provided as input, wait until each one has ended
 program define dobatch_wait, rclass
 
+	version 13.0
+
 	* If dobatch is disabled, do nothing
 	if `"$DOBATCH_DISABLE"'=="1" {
 		exit
