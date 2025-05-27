@@ -17,9 +17,9 @@ program define dobatch, rclass
 	}
 	
 	* dobatch requires unix-based systems and Stata MP
-	cap assert c(os)!="Windows"
+	cap assert c(os)=="Unix"
 	if _rc {
-		noi di as error "dobatch requires Unix or macOS"
+		noi di as error "dobatch requires Unix"
 		exit 198
 	}
 	
