@@ -7,7 +7,7 @@
 
 ## Overview
 
-`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. It requires Stata MP and a Unix-based system, such as macOS and Linux. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
+`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. It requires Stata MP and a Unix-based system, such as macOS or Linux. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
 
 ## Quickstart
 
