@@ -13,14 +13,13 @@
 
 {title:Description}
 
-{p 4 4 2}{cmd:dobatch_wait} temporarily pauses the current Stata session until prior Stata batch processes launched by {help dobatch:dobatch} have finished running. It operates in one of two modes:
+{p 4 4 2}{cmd:dobatch_wait} pauses the current Stata session until prior Stata batch processes launched by {help dobatch:dobatch} have finished running. It operates in one of two modes:
 
-{p 8 8 2}- By default, when no {cmd:pid()} option is provided, the command waits for all process identifiers (PIDs) stored in the global macro {it:DOBATCH_STATA_PID} to complete.
-This macro contains a list of the PIDs of all do-files launched by {help dobatch:dobatch}.
-If {it:DOBATCH_STATA_PID} is undefined, {cmd:dobatch_wait} waits for all other active Stata MP processes to complete.
-Once the waiting is over, {cmd:dobatch_wait} clears the contents of {it:DOBATCH_STATA_PID}.
+{p 8 8 2}- If no {cmd:pid(}{help numlist:numlist}{cmd:)} option is provided, {cmd:dobatch_wait} checks the global macro {it:DOBATCH_STATA_PID} for process identifiers (PIDs) of jobs launched by {cmd:dobatch}, and waits for each process to complete.
+If {it:DOBATCH_STATA_PID} is undefined, {cmd:dobatch_wait} instead waits for all other active Stata MP processes (excluding the current one) to complete.
+Once complete, {cmd:dobatch_wait} clears the contents of {it:DOBATCH_STATA_PID}.
 
-{p 8 8 2}- Otherwise, if the user supplies one or more PIDs via {cmd:pid(}{help numlist:numlist}{cmd:)}, {cmd:dobatch_wait} will pause until each of the specified processes has terminated. These PIDs are not restricted to Stata MP processes.
+{p 8 8 2}- If {cmd:pid(}{help numlist:numlist}{cmd:)} is specified, {cmd:dobatch_wait} waits for the specified PIDs to terminate. These may include any processes, not just Stata jobs.
 
 {p 4 4 2}{cmd:dobatch_wait} requires a Unix-based system.
 

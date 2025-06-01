@@ -39,11 +39,11 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 8 14 2} DOBATCH_MIN_CPUS_AVAILABLE: minimum number of CPUs that must be free before the do-file starts
 
-{p 8 14 2} DOBATCH_MAX_STATA_JOBS: maximum number of background Stata MP jobs allowed
+{p 8 14 2} DOBATCH_MAX_STATA_JOBS: maximum number of active Stata MP jobs allowed
 
 {p 8 14 2} DOBATCH_WAIT_TIME_MINS: time interval (in minutes) before checking CPU availability and background Stata jobs again. If the wait time is set to 0 minutes or less, {cmd:dobatch} does not monitor system resources.
 
-{p 8 14 2} DOBATCH_DISABLE: if set equal to 1, {cmd:dobatch} runs do-files like {help do:do}
+{p 8 14 2} DOBATCH_DISABLE: if set equal to 1, {cmd:dobatch} behaves exactly like {help do:do} and runs the do-file in the foreground
 
 
 {title:Stored results}
@@ -52,15 +52,15 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 4 4 2}Scalars
 
-{p 8 8 2}{cmd:r(MIN_CPUS_AVAILABLE)} {space 1} MIN_CPUS_AVAILABLE parameter value
+{p 8 8 2}{cmd:r(MIN_CPUS_AVAILABLE)} {space 1} MIN_CPUS_AVAILABLE threshold value
 
-{p 8 8 2}{cmd:r(MAX_STATA_JOBS)}     {space 5} MAX_STATA_JOBS parameter value
+{p 8 8 2}{cmd:r(MAX_STATA_JOBS)}     {space 5} MAX_STATA_JOBS threshold value
 
-{p 8 8 2}{cmd:r(WAIT_TIME_MINS)}     {space 5} WAIT_TIME_MINS parameter value
+{p 8 8 2}{cmd:r(WAIT_TIME_MINS)}     {space 5} number of minutes to wait between system resource checks
 
-{p 8 8 2}{cmd:r(PID)}                {space 16} process identifier (PID) assigned by the operating system to the newly launched do-file process
+{p 8 8 2}{cmd:r(PID)}                {space 16} process identifier (PID) assigned by the operating system to the newly launched background job
 
-{p 4 4 2}It also adds the PID to the contents of the global macro DOBATCH_STATA_PID.
+{p 4 4 2}In addition, the PID is appended to the contents of the global macro DOBATCH_STATA_PID.
 
 
 {title:Author}
