@@ -21,7 +21,7 @@
 It requires Stata MP and a Unix-based system.
 Before execution, {cmd:dobatch} checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
 If the system is busy, {cmd:dobatch} waits for 5 minutes before checking again.
-By default, the thresholds are defined as as:
+By default, the resource thresholds are defined as:
 
 {p 8 14 2}{it:MIN_CPUS_AVAILABLE} = max(c(processors_lic) - 1, 1)
 
@@ -52,9 +52,9 @@ Normally, Stata stops executing the do-file when it detects an error (nonzero re
 
 {p 4 4 2}Scalars
 
-{p 8 8 2}{cmd:r(MIN_CPUS_AVAILABLE)} {space 1} MIN_CPUS_AVAILABLE threshold value
+{p 8 8 2}{cmd:r(MIN_CPUS_AVAILABLE)} {space 1} {it:MIN_CPUS_AVAILABLE} threshold value
 
-{p 8 8 2}{cmd:r(MAX_STATA_JOBS)}     {space 5} MAX_STATA_JOBS threshold value
+{p 8 8 2}{cmd:r(MAX_STATA_JOBS)}     {space 5} {it:MAX_STATA_JOBS} threshold value
 
 {p 8 8 2}{cmd:r(WAIT_TIME_MINS)}     {space 5} number of minutes to wait between system resource checks
 
