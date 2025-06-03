@@ -25,7 +25,7 @@ dobatch file3.do
 
 For more details on usage and options, refer to the Stata help file.
 
-## Example
+## Example: parallelizing a for loop
 
 Suppose you have the following code:
 ```stata
