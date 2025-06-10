@@ -1,7 +1,7 @@
 # DOBATCH: Run Stata do-files in parallel
 
 - Current dobatch version: `1.0 4mar2025`
-- Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#examples) [`advanced`](#advanced)  [`faq`](#faq) [`author`](#author)
+- Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#example) [`advanced`](#advanced)  [`faq`](#faq) [`author`](#author)
 
 -----------
 
