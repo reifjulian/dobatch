@@ -36,7 +36,7 @@ do script3.do
 …
 ```
 
-On a linux server, you can execute these scripts in parallel by launching them as separate background jobs:
+On a linux server, you can execute these scripts in parallel by launching them as separate background jobs from the terminal:
 ```bash
 nohup stata-mp -b do script1.do &
 nohup stata-mp -b do script2.do &
@@ -55,7 +55,7 @@ dobatch script3.do
 
 ## Example: parallelizing a for loop
 
-Suppose you have the following code:
+Suppose you have the following Stata code:
 ```stata
 * mydofile.do
 forval x = 1/100 {
