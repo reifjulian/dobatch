@@ -1,7 +1,7 @@
 # DOBATCH: Run Stata do-files in parallel
 
 - Current dobatch version: `1.0 4mar2025`
-- Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#example-parallelizing-a-for-loop)
+- Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#example-running-scripts-in-parallel)
  [`advanced`](#advanced)  [`faq`](#faq) [`author`](#author)
 
 -----------
@@ -25,6 +25,33 @@ dobatch file3.do
 ```
 
 For more details on usage and options, refer to the Stata help file.
+
+## Example: running scripts in parallel
+
+Suppose you are running a large number of Stata scripts that are independent of each other:
+```stata
+do script1.do
+do script2.do
+do script3.do
+…
+```
+
+On a linux server, you can execute these scripts in parallel by launching them as separate background jobs:
+```bash
+nohup stata-mp -b do script1.do &
+nohup stata-mp -b do script2.do &
+nohup stata-mp -b do script3.do &
+…
+```
+
+This approach allows faster execution by leveraging multiple processors. However, the user must be cautious not to overload the server. Each background process consumes CPU and memory. You can use `dobatch` to manage this safely and efficiently. `dobatch` launches only a limited number of jobs at once and automatically starts new ones as earlier ones finish. All you need to do is replace `do` with `dobatch`:
+```stata
+dobatch script1.do
+dobatch script2.do
+dobatch script3.do
+…
+```
+
 
 ## Example: parallelizing a for loop
 
