@@ -32,6 +32,7 @@ By default, the resource thresholds are defined as:
 {p 4 4 2}On Windows, {cmd:dobatch} uses PowerShell to monitor system resources and launch background processes.
 It auto-discovers the StataMP executable from the Stata installation directory and uses the {cmd:/e} batch mode flag.
 CPU monitoring uses the system load percentage to estimate available CPUs.
+Background Stata processes may appear on the Windows taskbar. Do not click on them, as doing so will interrupt the batch job.
 
 
 {title:Options}
