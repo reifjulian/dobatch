@@ -1,6 +1,6 @@
 # DOBATCH: Run Stata do-files in parallel
 
-- Current dobatch version: `1.0 4mar2025`
+- Current dobatch version: `1.1 28jan2026`
 - Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#example-running-scripts-in-parallel)
  [`advanced`](#advanced)  [`faq`](#faq) [`author`](#author)
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. It requires Stata MP and a Unix-based system, such as macOS or Linux. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
+`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. It requires Stata MP and supports Unix-based systems (macOS, Linux) and Windows. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
 
 ## Quickstart
 
@@ -62,7 +62,7 @@ forval x = 1/100 {
 	[...]
 }
 ```
-If each iteration of this loop runs independently, meaning it doesn’t rely on previous iterations, the loop can be parallelized. To do this, first modify the code as follows:
+If each iteration of this loop runs independently, meaning it doesn't rely on previous iterations, the loop can be parallelized. To do this, first modify the code as follows:
 ```stata
 * mydofile.do
 local lower `1'
@@ -142,6 +142,16 @@ do nextdofile.do
 ```
 For more details, type `help dobatch_wait` in Stata.
 
+## Windows notes
+
+On Windows, `dobatch` uses PowerShell to manage background processes. The following details are specific to Windows:
+
+- **Executable discovery**: `dobatch` auto-discovers the Stata MP executable (`StataMP-64.exe` or `StataMP.exe`) from the Stata installation directory. No PATH configuration is needed.
+- **Batch mode**: Windows uses the `/e` flag for batch mode execution (equivalent to `-b` on Unix).
+- **CPU monitoring**: CPU availability is estimated using the `Win32_Processor.LoadPercentage` metric, which reports load as a percentage (0&#8211;100). Available CPUs are calculated as `total_cpus * (100 - load_pct) / 100`.
+- **Process detection**: Background Stata processes are detected using PowerShell's `Get-Process` cmdlet.
+- **PowerShell**: All system operations use `powershell -NoProfile` (Windows PowerShell 5.1, available on all supported Windows versions).
+
 ## FAQ
 
 **Will `dobatch` overload my server?**
@@ -152,20 +162,16 @@ For more details, type `help dobatch_wait` in Stata.
 
 Increase parallelization by setting the global variable `DOBATCH_MAX_STATA_JOBS` to a higher value and `DOBATCH_MIN_CPUS_AVAILABLE` to a small or negative value. This allows more jobs to launch even when CPU usage is high. See Example 1 above for details.
 
-**`dobatch` is great! But sometimes I need to run my scripts on a Windows machine, and manually changing all the `dobatch` commands back to `do` is annoying. Yes, I'm lazy.**
+**Does `dobatch` work on Windows?**
 
-Nothing wrong with being lazy! Instead of editing every `dobatch` call, just add `global DOBATCH_DISABLE = 1` to your script&#8212;or better yet, to your [Stata profile](https://julianreif.com/guide/#stata-profile) on Windows&#8212;so `dobatch` automatically behaves like `do`.
-
-**Do you have any plans to add Windows support for `dobatch`?**
-
-No.
+Yes. `dobatch` supports Windows using PowerShell for system operations. It auto-discovers the StataMP executable and uses the `/e` batch mode flag. See the [Windows notes](#windows-notes) section for details.
 
 **`dobatch` is not working on my system. What should I do?**
 
-Try setting `global DOBATCH_WAIT_TIME_MINS = 0` to bypass system monitoring while still running jobs in parallel. `dobatch` has been tested on Mac OS, Unix bash, and Unix tcsh. If you encounter issues, report them in the [issues section](../../issues). Please include the output of the following code when submitting your issue:
+Try setting `global DOBATCH_WAIT_TIME_MINS = 0` to bypass system monitoring while still running jobs in parallel. `dobatch` has been tested on Mac OS, Unix bash, Unix tcsh, and Windows. If you encounter issues, report them in the [issues section](../../issues). Please include the output of the following code when submitting your issue:
 ```stata
-cap program drop _print_timestamp 
-program define _print_timestamp 
+cap program drop _print_timestamp
+program define _print_timestamp
 	di "{hline `=min(79, c(linesize))'}"
 
 	di "Date and time: $S_DATE $S_TIME"
@@ -179,7 +185,7 @@ program define _print_timestamp
 	local shell : env SHELL
 	if !mi("`hostname'") di "Hostname:      `hostname'"
 	if !mi("`shell'") di "Shell:         `shell'"
-	
+
 	di "{hline `=min(79, c(linesize))'}"
 end
 noi _print_timestamp

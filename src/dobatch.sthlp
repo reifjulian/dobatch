@@ -18,7 +18,7 @@
 {title:Description}
 
 {p 4 4 2}{cmd:dobatch} runs {it:filename} as a background batch process, allowing multiple do-files to execute in parallel.
-It requires Stata MP and a Unix-based system.
+It requires Stata MP and supports Unix-based systems (macOS, Linux) and Windows.
 Before execution, {cmd:dobatch} checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
 If the system is busy, {cmd:dobatch} waits for 5 minutes before checking again.
 By default, the resource thresholds are defined as:
@@ -28,6 +28,11 @@ By default, the resource thresholds are defined as:
 {p 8 14 2}{it:MAX_STATA_JOBS} = max( floor[c(processors_mach) / c(processors_lic)], 2)
 
 {p 4 4 2}For example, on a server with 64 processors running Stata MP 8, {cmd:dobatch} will wait until at least 7 CPUs are free and fewer than 8 Stata MP processes are running.
+
+{p 4 4 2}On Windows, {cmd:dobatch} uses PowerShell to monitor system resources and launch background processes.
+It auto-discovers the StataMP executable from the Stata installation directory and uses the {cmd:/e} batch mode flag.
+CPU monitoring uses the system load percentage to estimate available CPUs.
+Background Stata processes may appear on the Windows taskbar. Do not click on them, as doing so will interrupt the batch job.
 
 
 {title:Options}
