@@ -90,6 +90,49 @@ if c(os)=="Windows" {
 cap dobatch dofile1.do, exe("nonexistent_stata.exe")
 assert _rc==601
 
+* exe() tests for macOS terminal (Unix on Macintosh)
+if c(os)=="Unix" & strpos(c(machine_type), "Macintosh") {
+
+	* Determine the correct executable name and app bundle name based on edition
+	if c(MP)==1 {
+		local unixexename "stata-mp"
+		local appname "StataMP"
+	}
+	else if c(SE)==1 {
+		local unixexename "stata-se"
+		local appname "StataSE"
+	}
+	else if c(flavor)=="BE" {
+		local unixexename "stata"
+		local appname "StataBE"
+	}
+	else {
+		local unixexename "stata"
+		local appname "Stata"
+	}
+
+	* exe(): filename only (looked up via PATH)
+	rm test1.log
+	dobatch dofile1.do, exe("`unixexename'")
+	dobatch_wait
+	confirm file test1.log
+
+	* exe(): full absolute path (executable is in app bundle's MacOS directory)
+	* Path structure: /Applications/Stata/StataMP.app/Contents/MacOS/stata-mp
+	local exepath "/Applications/Stata/`appname'.app/Contents/MacOS/`unixexename'"
+	cap confirm file "`exepath'"
+	if !_rc {
+		rm test1.log
+		dobatch dofile1.do, exe("`exepath'")
+		dobatch_wait
+		confirm file test1.log
+	}
+
+	* exe(): invalid name should produce an error
+	cap dobatch dofile1.do, exe("nonexistent_stata")
+	assert _rc==601
+}
+
 * Test DOBATCH_DISABLE mode
 global DOBATCH_DISABLE = 1
 dobatch dofile1.do
