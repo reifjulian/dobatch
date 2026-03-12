@@ -8,7 +8,7 @@
 
 ## Overview
 
-`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. It supports all Stata editions (MP, SE, IC/BE) on Unix-based systems (macOS, Linux) and Windows. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
+`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes. It does not monitor memory usage.
 
 ## Quickstart
 
@@ -36,7 +36,7 @@ do script3.do
 …
 ```
 
-On a linux server, you can execute these scripts in parallel by launching them as separate background jobs from the terminal:
+On a linux server with Stata/MP, you can execute these scripts in parallel by launching them as separate background jobs from the terminal:
 ```bash
 nohup stata-mp -b do script1.do &
 nohup stata-mp -b do script2.do &
@@ -44,7 +44,7 @@ nohup stata-mp -b do script3.do &
 …
 ```
 
-This approach allows faster execution by leveraging multiple processors. However, the user must be cautious not to overload the server. Each background process consumes CPU and memory. You can use `dobatch` to manage this safely and efficiently. `dobatch` launches only a limited number of jobs at once and automatically starts new ones as earlier ones finish. All you need to do is replace `do` with `dobatch`:
+This approach allows faster execution by leveraging multiple processors. However, the user must be cautious not to overload the server. Each background process consumes CPU and memory. You can use `dobatch` to manage the CPU-use safely and efficiently. `dobatch` launches only a limited number of jobs at once and automatically starts new ones as earlier ones finish. All you need to do is replace `do` with `dobatch`:
 ```stata
 dobatch script1.do
 dobatch script2.do
@@ -167,10 +167,6 @@ On Windows, `dobatch` uses PowerShell to manage background processes. The follow
 **How can I run more Stata jobs in parallel?**
 
 Increase parallelization by setting the global variable `DOBATCH_MAX_STATA_JOBS` to a higher value and `DOBATCH_MIN_CPUS_AVAILABLE` to a small or negative value. This allows more jobs to launch even when CPU usage is high. See Example 1 above for details.
-
-**Does `dobatch` work on Windows?**
-
-Yes. `dobatch` supports Windows using PowerShell for system operations. It auto-discovers the Stata executable based on the running edition and uses the `/e` batch mode flag. See the [Windows notes](#windows-notes) section for details.
 
 **`dobatch` is not working on my system. What should I do?**
 

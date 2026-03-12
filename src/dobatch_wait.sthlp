@@ -22,8 +22,6 @@ Once complete, {cmd:dobatch_wait} clears the contents of DOBATCH_STATA_PID.
 
 {p 8 8 2}2. If {cmd:pid(}{help numlist:numlist}{cmd:)} is specified, {cmd:dobatch_wait} waits for the specified PIDs to terminate. These may include any processes, not just Stata jobs.
 
-{p 4 4 2}{cmd:dobatch_wait} supports Unix-based systems (macOS, Linux) and Windows.
-
 
 {title:Options}
 

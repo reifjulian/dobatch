@@ -18,7 +18,6 @@
 {title:Description}
 
 {p 4 4 2}{cmd:dobatch} runs {it:filename} as a background batch process, allowing multiple do-files to execute in parallel.
-It supports all Stata editions (MP, SE, IC/BE) on Unix-based systems (macOS, Linux) and Windows.
 Before execution, {cmd:dobatch} checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
 If the system is busy, {cmd:dobatch} waits for 5 minutes before checking again.
 By default, the resource thresholds are defined as:
@@ -33,6 +32,8 @@ By default, the resource thresholds are defined as:
 It auto-discovers the Stata executable from the Stata installation directory based on the running edition, and uses the {cmd:/e} batch mode flag.
 CPU monitoring uses the system load percentage to estimate available CPUs.
 Background Stata processes may appear on the Windows taskbar. Do not click on them, as doing so will interrupt the batch job.
+
+{p 4 4 2}{cmd:dobatch} does not monitor memory usage.
 
 
 {title:Options}
