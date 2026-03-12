@@ -139,11 +139,12 @@ dobatch dofile1.do
 global DOBATCH_DISABLE
 
 * Unix-only: expanding ~ to user's home directory
-* Note: for this example to work, the /dobatch folder must be placed in user's home directory
+* Note: requires dobatch folder to be located either in ~, ~/Github, or ~/Documents/Github
 if c(os)=="Unix" {
 	rm test1.log
 	
 	local pwd: pwd
+	if strpos("`pwd'","GitHub/") local prefix "GitHub/"
 	if strpos("`pwd'","Documents/GitHub/") local prefix "Documents/GitHub/"
 	
 	dobatch "~/`prefix'dobatch/test/dofile1.do"
