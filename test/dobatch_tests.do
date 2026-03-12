@@ -142,7 +142,11 @@ global DOBATCH_DISABLE
 * Note: for this example to work, the /dobatch folder must be placed in user's home directory
 if c(os)=="Unix" {
 	rm test1.log
-	dobatch "~/dobatch/test/dofile1.do"
+	
+	local pwd: pwd
+	if strpos("`pwd'","Documents/GitHub/") local prefix "Documents/GitHub/"
+	
+	dobatch "~/`prefix'dobatch/test/dofile1.do"
 	sleep 8000
 	confirm file test1.log
 }

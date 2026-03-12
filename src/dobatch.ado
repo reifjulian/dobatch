@@ -18,15 +18,6 @@ program define dobatch, rclass
 
 	* Detect platform
 	local is_windows = (c(os)=="Windows")
-	local is_mac_gui = (c(os)=="MacOSX")
-	if !`is_windows' & !`is_mac_gui' {
-		cap assert c(os)=="Unix"
-		if _rc {
-			noi di as error "dobatch requires Windows, macOS, or Linux"
-			exit 198
-		}
-	}
-
 	* First argument must be dofilename, followed by optional arguments to the dofile
 	syntax anything [, nostop EXE(string)]
 	gettoken dofile args : anything
@@ -76,7 +67,7 @@ program define dobatch, rclass
 	************************************************
 	* Find the Stata executable
 	************************************************
-	_dobatch_get_exe, exe("`exe'") iswindows(`is_windows') ismacgui(`is_mac_gui')
+	_dobatch_get_exe, exe("`exe'") iswindows(`is_windows')
 	local stata_exe = r(stata_exe)
 
 
@@ -142,9 +133,8 @@ program define dobatch, rclass
 			local num_stata_jobs = `num_stata_jobs'-1
 		}
 		else {
-			* Count background Stata processes via ps/grep
-			* macOS GUI uses mixed-case bundle names; Unix uses lowercase
-			local stata_grep = cond(`is_mac_gui', "[S]tata", "[s]tata")
+			* Count background Stata processes via ps/grep (case-insensitive to catch both GUI and CLI processes)
+			local stata_grep "[Ss]tata"
 			cap rm `tmp'
 			qui shell ps aux | grep '`stata_grep'' | wc -l > `tmp'
 			file open `fh' using `tmp', read
@@ -214,7 +204,7 @@ program define _dobatch_get_exe, rclass
 
 	version 13.0
 
-	syntax [, EXE(string) ISwindows(integer 0) ISmacgui(integer 0)]
+	syntax [, EXE(string) ISwindows(integer 0)]
 
 	tempfile tmp
 
@@ -224,24 +214,24 @@ program define _dobatch_get_exe, rclass
 	if c(MP)==1 {
 		local winexebase "StataMP"
 		local unixexename "stata-mp"
-		local macexename "StataMP"
+		local macappname "StataMP"
 	}
 	else if c(SE)==1 {
 		local winexebase "StataSE"
 		local unixexename "stata-se"
-		local macexename "StataSE"
+		local macappname "StataSE"
 	}
 	else {
 		* IC or BE: use c(flavor) to distinguish if available (Stata 14+), default to IC naming
 		if c(flavor)=="BE" {
 			local winexebase "StataBE"
 			local unixexename "stata"
-			local macexename "StataBE"
+			local macappname "StataBE"
 		}
 		else {
 			local winexebase "Stata"
 			local unixexename "stata"
-			local macexename "Stata"
+			local macappname "Stata"
 		}
 	}
 
@@ -296,33 +286,19 @@ program define _dobatch_get_exe, rclass
 		di as error "Alternatively, specify the executable using the exe() option."
 		exit 601
 	}
-	else if `ismacgui' {
-		* macOS GUI: executable is in the app bundle's MacOS directory
-		local statadir = c(sysdir_stata)
-		local mac_path "`statadir'../MacOS/`macexename'"
-		cap confirm file "`mac_path'"
-		if !_rc {
-			return local stata_exe "`mac_path'"
-			exit
-		}
-		* Fallback: try PATH
-		cap rm `tmp'
-		qui shell sh -c 'command -v "`macexename'" >/dev/null && touch `tmp''
-		cap confirm file `tmp'
-		if !_rc {
-			return local stata_exe "`macexename'"
-			exit
-		}
-		di as error "`macexename' not found at `mac_path' or on PATH."
-		di as error "Alternatively, specify the executable using the exe() option."
-		exit 601
-	}
 	else {
-		* Unix (Linux or macOS terminal): try sysdir first, then PATH
+		* Unix/macOS: try sysdir, then macOS .app bundle, then PATH
 		local statadir = c(sysdir_stata)
 		cap confirm file "`statadir'`unixexename'"
 		if !_rc {
 			return local stata_exe "`statadir'`unixexename'"
+			exit
+		}
+		* Try macOS .app bundle: <sysdir>/<AppName>.app/Contents/MacOS/<unixexename>
+		local mac_path "`statadir'`macappname'.app/Contents/MacOS/`unixexename'"
+		cap confirm file "`mac_path'"
+		if !_rc {
+			return local stata_exe "`mac_path'"
 			exit
 		}
 		* Fallback: try PATH
@@ -334,7 +310,6 @@ program define _dobatch_get_exe, rclass
 			exit
 		}
 		di as error "`unixexename' not found in `statadir' or on PATH."
-		di as error "Ensure Stata is installed and accessible. Try running 'which `unixexename'' in the terminal."
 		di as error "Alternatively, specify the executable using the exe() option."
 		exit 601
 	}

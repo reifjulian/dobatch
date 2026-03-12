@@ -14,14 +14,6 @@ program define dobatch_wait, rclass
 
 	* Detect platform
 	local is_windows = (c(os)=="Windows")
-	local is_mac_gui = (c(os)=="MacOSX")
-	if !`is_windows' & !`is_mac_gui' {
-		cap assert c(os)=="Unix"
-		if _rc {
-			noi di as error "dobatch_wait requires Windows, macOS, or Linux"
-			exit 198
-		}
-	}
 
 	* PIDs must be positive integers. If not specified, pull PIDs from DOBATCH_STATA_PID
 	syntax [, pid(numlist >0 integer)]
@@ -84,9 +76,8 @@ program define dobatch_wait, rclass
 				local num_stata_jobs = `num_stata_jobs'-1
 			}
 			else {
-				* Count background Stata processes via ps/grep
-				* macOS GUI uses mixed-case bundle names; Unix uses lowercase
-				local stata_grep = cond(`is_mac_gui', "[S]tata", "[s]tata")
+				* Count background Stata processes via ps/grep (case-insensitive to catch both GUI and CLI processes)
+				local stata_grep "[Ss]tata"
 				cap rm `tmp'
 				qui shell ps aux | grep '`stata_grep'' | wc -l > `tmp'
 				file open `fh' using `tmp', read
