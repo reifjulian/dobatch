@@ -144,7 +144,7 @@ if c(os)=="Unix" {
 	rm test1.log
 	
 	local pwd: pwd
-	if strpos("`pwd'","GitHub/") local prefix "GitHub/"
+	if strpos("`pwd'","github/") local prefix "github/"
 	if strpos("`pwd'","Documents/GitHub/") local prefix "Documents/GitHub/"
 	
 	dobatch "~/`prefix'dobatch/test/dofile1.do"
