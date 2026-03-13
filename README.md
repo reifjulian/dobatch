@@ -2,7 +2,7 @@
 
 - Current dobatch version: `1.2 10mar2026`
 - Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#example-running-scripts-in-parallel)
- [`advanced`](#advanced)  [`faq`](#faq) [`author`](#author)
+ [`advanced`](#advanced)  [`faq`](#faq) [`version history`](#version-history) [`author`](#author)
 
 -----------
 
@@ -192,6 +192,14 @@ program define _print_timestamp
 end
 noi _print_timestamp
 ```
+
+## Version history
+
+| Version | Date | Description |
+|---------|------|-------------|
+| 1.2 | 10 Mar 2026 | Extended support to all Stata editions (SE, IC/BE); added `exe()` option; fixed macOS GUI issue |
+| 1.1 | 28 Jan 2026 | Added Windows support |
+| 1.0 | 4 Mar 2025 | Initial release (Unix/macOS, Stata MP) |
 
 ## Author
 
