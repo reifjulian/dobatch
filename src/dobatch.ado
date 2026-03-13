@@ -32,7 +32,7 @@ program define dobatch, rclass
 	local num_cpus_machine = c(processors_mach)
 	local num_cpus_statamp = c(processors_lic)
 	local default_min_cpus_available = max(`num_cpus_statamp' - 1,1)
-	local default_max_stata_jobs = max(floor(`num_cpus_machine' / `num_cpus_statamp'), 2)
+	local default_max_stata_jobs = max(floor(`num_cpus_machine' / `num_cpus_statamp'), 2)  // for non-MP, c(processors_mach) is missing; max(.,2)=2 since Stata's max() ignores missings
 
 	local MIN_CPUS_AVAILABLE = `default_min_cpus_available'
 	local MAX_STATA_JOBS = `default_max_stata_jobs'
