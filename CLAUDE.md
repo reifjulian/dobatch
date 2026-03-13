@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**dobatch** is a Stata package that runs do-files as parallel background batch processes on Unix-based systems (macOS/Linux) and Windows. It requires Stata MP and monitors system resources (CPU availability, active Stata processes) to prevent server overload. The companion command `dobatch_wait` pauses execution until background jobs complete. On Unix, shell commands use `nohup`/`ps`/`uptime`; on Windows, PowerShell handles process launching, CPU monitoring, and process detection.
+**dobatch** is a Stata package that runs do-files as parallel background batch processes on Unix-based systems (macOS/Linux) and Windows. It supports all Stata editions (MP, SE, IC/BE) and monitors system resources (CPU availability, active Stata processes) to prevent server overload. The companion command `dobatch_wait` pauses execution until background jobs complete. On Unix, shell commands use `nohup`/`ps`/`uptime`; on Windows, PowerShell handles process launching, CPU monitoring, and process detection.
 
 ## Repository Structure
 
@@ -23,16 +23,18 @@ The test script adds `../src` to `adopath` automatically. Tests are platform-awa
 
 ## Key Architecture
 
-**dobatch.ado** launches do-files as background batch processes. On Unix, it uses `nohup stata-mp -b do` shell commands. On Windows, it uses PowerShell `Start-Process` with `-WindowStyle Hidden` and the `/e` batch mode flag. Before launching, it polls system resources (CPU load, active Stata processes) and delays execution if thresholds are exceeded. Process IDs are accumulated in the global macro `DOBATCH_STATA_PID`.
+**dobatch.ado** launches do-files as background batch processes. On Unix/macOS terminal, it uses `nohup <stata_exe> -b do` shell commands. On macOS GUI (`c(os)=="MacOSX"`), it uses the bundle executable path. On Windows, it uses PowerShell `Start-Process` with `-WindowStyle Hidden` and the `/e` batch mode flag. Before launching, it polls system resources (CPU load, active Stata processes) and delays execution if thresholds are exceeded. Process IDs are accumulated in the global macro `DOBATCH_STATA_PID`.
+
+**Edition detection** uses `c(flavor)` (returns `"MP"`, `"SE"`, `"IC"`, or `"BE"`) to determine the correct executable name. The `exe()` option bypasses auto-detection for non-standard installs. The `_dobatch_get_exe` subprogram handles all exe lookup logic.
 
 **dobatch_wait.ado** polls for process completion. On Unix, it uses `ps` with the stored PIDs. On Windows, it uses PowerShell `Get-Process`. It supports waiting for all tracked PIDs (default) or a specific PID passed via the `pid()` option.
 
-**Platform detection** uses `c(os)=="Windows"` to branch between Windows (PowerShell) and Unix (shell) code paths.
+**Platform detection** uses `c(os)` to branch: `"Windows"` (PowerShell), `"MacOSX"` (macOS GUI shell with mixed-case exe names), and `"Unix"` (macOS terminal + Linux with lowercase exe names).
 
 **Configuration globals** (set by user before calling dobatch):
 - `DOBATCH_DISABLE` - run in foreground like `do`
 - `DOBATCH_MIN_CPUS_AVAILABLE` - minimum free CPUs required
-- `DOBATCH_MAX_STATA_JOBS` - maximum concurrent Stata MP processes
+- `DOBATCH_MAX_STATA_JOBS` - maximum concurrent Stata processes
 - `DOBATCH_WAIT_TIME_MINS` - polling interval; set to 0 to skip resource monitoring
 
 ## Running Stata on Windows

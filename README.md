@@ -1,14 +1,14 @@
 # DOBATCH: Run Stata do-files in parallel
 
-- Current dobatch version: `1.1 28jan2026`
+- Current dobatch version: `1.2 10mar2026`
 - Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#example-running-scripts-in-parallel)
- [`advanced`](#advanced)  [`faq`](#faq) [`author`](#author)
+ [`advanced`](#advanced)  [`faq`](#faq) [`version history`](#version-history) [`author`](#author)
 
 -----------
 
 ## Overview
 
-`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. It requires Stata MP and supports Unix-based systems (macOS, Linux) and Windows. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes.
+`dobatch` runs a do-file as a background batch process, allowing multiple do-files to execute in parallel. Before execution, `dobatch` checks system resources to ensure sufficient CPU availability and to limit the number of active Stata processes. It does not monitor memory usage.
 
 ## Quickstart
 
@@ -36,7 +36,7 @@ do script3.do
 …
 ```
 
-On a linux server, you can execute these scripts in parallel by launching them as separate background jobs from the terminal:
+On a linux server with Stata/MP, you can execute these scripts in parallel by launching them as separate background jobs from the terminal:
 ```bash
 nohup stata-mp -b do script1.do &
 nohup stata-mp -b do script2.do &
@@ -44,7 +44,7 @@ nohup stata-mp -b do script3.do &
 …
 ```
 
-This approach allows faster execution by leveraging multiple processors. However, the user must be cautious not to overload the server. Each background process consumes CPU and memory. You can use `dobatch` to manage this safely and efficiently. `dobatch` launches only a limited number of jobs at once and automatically starts new ones as earlier ones finish. All you need to do is replace `do` with `dobatch`:
+This approach allows faster execution by leveraging multiple processors. However, the user must be cautious not to overload the server. Each background process consumes CPU and memory. You can use `dobatch` to manage the CPU-use safely and efficiently. `dobatch` launches only a limited number of jobs at once and automatically starts new ones as earlier ones finish. All you need to do is replace `do` with `dobatch`:
 ```stata
 dobatch script1.do
 dobatch script2.do
@@ -102,14 +102,20 @@ MIN_CPUS_AVAILABLE = max(c(processors_lic) - 1, 1)
 MAX_STATA_JOBS = max(floor(c(processors_mach) / c(processors_lic)), 2)
 ```
 
-For example, on a server with 64 processors running Stata MP 8, `dobatch` will wait until at least 7 CPUs are free and fewer than 8 Stata MP processes are running. If no other processes are running on the server, this allows up to 8 do-files to run in parallel in the background.
+For example, on a server with 64 processors running Stata MP 8, `dobatch` will wait until at least 7 CPUs are free and fewer than 8 Stata processes are running. If no other processes are running on the server, this allows up to 8 do-files to run in parallel in the background.
 
 The following global macros can be used to adjust the default settings:
 
 - `DOBATCH_MIN_CPUS_AVAILABLE`: Minimum number of CPUs that must be free before the do-file starts.
-- `DOBATCH_MAX_STATA_JOBS`: Maximum number of active Stata MP jobs allowed.
+- `DOBATCH_MAX_STATA_JOBS`: Maximum number of active Stata jobs allowed.
 - `DOBATCH_WAIT_TIME_MINS`: Time interval (in minutes) before checking CPU availability and active Stata jobs again. If the wait time is set to 0 minutes or less, `dobatch` does not monitor system resources.
 - `DOBATCH_DISABLE`: If set to `1`, `dobatch` behaves like the standard `do` command and runs the do-file in the foreground
+
+The `exe()` option lets you specify the Stata executable directly, bypassing auto-detection. This is useful for non-standard installs or when you want to launch a specific edition:
+```stata
+dobatch mydofile.do, exe("StataSE-64.exe")           // filename, looked up in Stata install dir
+dobatch mydofile.do, exe("C:/Stata19/StataMP-64.exe") // full path
+```
 
 **Example 1. Allowing more Stata jobs**
 
@@ -146,7 +152,7 @@ For more details, type `help dobatch_wait` in Stata.
 
 On Windows, `dobatch` uses PowerShell to manage background processes. The following details are specific to Windows:
 
-- **Executable discovery**: `dobatch` auto-discovers the Stata MP executable (`StataMP-64.exe` or `StataMP.exe`) from the Stata installation directory. No PATH configuration is needed.
+- **Executable discovery**: `dobatch` auto-discovers the Stata executable from the Stata installation directory based on the running edition (e.g., `StataMP-64.exe` for MP, `StataSE-64.exe` for SE). No PATH configuration is needed. Use the `exe()` option to override for non-standard installs.
 - **Batch mode**: Windows uses the `/e` flag for batch mode execution (equivalent to `-b` on Unix).
 - **CPU monitoring**: CPU availability is estimated using the `Win32_Processor.LoadPercentage` metric, which reports load as a percentage (0&#8211;100). Available CPUs are calculated as `total_cpus * (100 - load_pct) / 100`.
 - **Process detection**: Background Stata processes are detected using PowerShell's `Get-Process` cmdlet.
@@ -156,19 +162,15 @@ On Windows, `dobatch` uses PowerShell to manage background processes. The follow
 
 **Will `dobatch` overload my server?**
 
-`dobatch` monitors CPU usage and the number of active Stata MP processes to prevent overloading. The default settings are conservative, but note that `dobatch` does not monitor memory usage&#8212;users remain responsible for ensuring sufficient system memory.
+`dobatch` monitors CPU usage and the number of active Stata processes to prevent overloading. The default settings are conservative, but note that `dobatch` does not monitor memory usage&#8212;users remain responsible for ensuring sufficient system memory.
 
 **How can I run more Stata jobs in parallel?**
 
 Increase parallelization by setting the global variable `DOBATCH_MAX_STATA_JOBS` to a higher value and `DOBATCH_MIN_CPUS_AVAILABLE` to a small or negative value. This allows more jobs to launch even when CPU usage is high. See Example 1 above for details.
 
-**Does `dobatch` work on Windows?**
-
-Yes. `dobatch` supports Windows using PowerShell for system operations. It auto-discovers the StataMP executable and uses the `/e` batch mode flag. See the [Windows notes](#windows-notes) section for details.
-
 **`dobatch` is not working on my system. What should I do?**
 
-Try setting `global DOBATCH_WAIT_TIME_MINS = 0` to bypass system monitoring while still running jobs in parallel. `dobatch` has been tested on Mac OS, Unix bash, Unix tcsh, and Windows. If you encounter issues, report them in the [issues section](../../issues). Please include the output of the following code when submitting your issue:
+Try setting `global DOBATCH_WAIT_TIME_MINS = 0` to bypass system monitoring while still running jobs in parallel. `dobatch` has been tested on macOS, Unix bash, Unix tcsh, and Windows. If you encounter issues, report them in the [issues section](../../issues). Please include the output of the following code when submitting your issue:
 ```stata
 cap program drop _print_timestamp
 program define _print_timestamp
@@ -190,6 +192,14 @@ program define _print_timestamp
 end
 noi _print_timestamp
 ```
+
+## Version history
+
+| Version | Date | Description |
+|---------|------|-------------|
+| 1.2 | 10 Mar 2026 | Extended support to all Stata editions (SE, IC/BE); added `exe()` option; fixed macOS GUI issue |
+| 1.1 | 28 Jan 2026 | Added Windows support |
+| 1.0 | 4 Mar 2025 | Initial release (Unix/macOS, Stata MP) |
 
 ## Author
 

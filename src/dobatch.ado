@@ -1,4 +1,4 @@
-*! dobatch 1.1 28jan2026 by Julian Reif
+*! dobatch 1.2 10mar2026 by Julian Reif
 
 program define dobatch, rclass
 
@@ -18,22 +18,8 @@ program define dobatch, rclass
 
 	* Detect platform
 	local is_windows = (c(os)=="Windows")
-	if !`is_windows' {
-		cap assert c(os)=="Unix"
-		if _rc {
-			noi di as error "dobatch requires Windows or Unix"
-			exit 198
-		}
-	}
-
-	cap assert c(MP)==1
-	if _rc {
-		noi di as error "dobatch requires Stata MP"
-		exit 198
-	}
-
 	* First argument must be dofilename, followed by optional arguments to the dofile
-	syntax anything [, nostop]
+	syntax anything [, nostop EXE(string)]
 	gettoken dofile args : anything
 	cap confirm file "`dofile'"
 	if _rc cap confirm file "`dofile'.do"
@@ -46,7 +32,7 @@ program define dobatch, rclass
 	local num_cpus_machine = c(processors_mach)
 	local num_cpus_statamp = c(processors_lic)
 	local default_min_cpus_available = max(`num_cpus_statamp' - 1,1)
-	local default_max_stata_jobs = max(floor(`num_cpus_machine' / `num_cpus_statamp'), 2)
+	local default_max_stata_jobs = max(floor(`num_cpus_machine' / `num_cpus_statamp'), 2)  // for non-MP, c(processors_mach) is missing; max(.,2)=2 since Stata's max() ignores missings
 
 	local MIN_CPUS_AVAILABLE = `default_min_cpus_available'
 	local MAX_STATA_JOBS = `default_max_stata_jobs'
@@ -79,39 +65,10 @@ program define dobatch, rclass
 
 
 	************************************************
-	* Confirm that Stata MP is an installed application
+	* Find the Stata executable
 	************************************************
-	if `is_windows' {
-		* Search for StataMP-64.exe or StataMP.exe in the Stata system directory
-		local stata_exe ""
-		local statadir = c(sysdir_stata)
-		cap confirm file "`statadir'StataMP-64.exe"
-		if !_rc {
-			local stata_exe "`statadir'StataMP-64.exe"
-		}
-		else {
-			cap confirm file "`statadir'StataMP.exe"
-			if !_rc {
-				local stata_exe "`statadir'StataMP.exe"
-			}
-		}
-		if mi("`stata_exe'") {
-			di as error "StataMP executable not found in `statadir'"
-			di as error "Ensure StataMP-64.exe or StataMP.exe exists in the Stata installation directory."
-			exit 601
-		}
-	}
-	else {
-		cap rm `tmp'
-		qui shell sh -c 'command -v stata-mp >/dev/null && touch `tmp''
-
-		cap confirm file `tmp'
-		if _rc {
-			di as error "stata-mp not found. Ensure Stata is installed and accessible from your system's PATH."
-			di as error "Try running 'which stata-mp' or 'echo \$PATH' in the terminal to debug."
-			exit 601
-		}
-	}
+	_dobatch_get_exe, exe("`exe'") iswindows(`is_windows')
+	local stata_exe = r(stata_exe)
 
 
 	************************************************
@@ -157,10 +114,10 @@ program define dobatch, rclass
 		}
 		noi di _n "Available CPUs at $S_TIME: `free_cpus'"
 
-		* Count number of background Stata MP processes
+		* Count number of background Stata processes
 		if `is_windows' {
 			cap rm `tmp'
-			qui shell powershell -NoProfile -Command "@(Get-Process -Name 'StataMP*' -ErrorAction SilentlyContinue).Count" > `tmp'
+			qui shell powershell -NoProfile -Command "@(Get-Process -Name 'Stata*' -ErrorAction SilentlyContinue).Count" > `tmp'
 			file open `fh' using `tmp', read
 			file read `fh' line
 			file close `fh'
@@ -169,16 +126,17 @@ program define dobatch, rclass
 			cap confirm integer number `num_stata_jobs'
 			if _rc {
 				di as error "Error counting the number of background Stata processes:"
-				di as error `"powershell -NoProfile -Command "@(Get-Process -Name 'StataMP*' -ErrorAction SilentlyContinue).Count""'
+				di as error `"powershell -NoProfile -Command "@(Get-Process -Name 'Stata*' -ErrorAction SilentlyContinue).Count""'
 				confirm integer number `num_stata_jobs'
 			}
 			* Subtract one to exclude the parent process (this script)
 			local num_stata_jobs = `num_stata_jobs'-1
 		}
 		else {
-			* Count number of background stata-mp processes. Subtract one to exclude the parent process (this script).
+			* Count background Stata processes via ps/grep (case-insensitive to catch both GUI and CLI processes)
+			local stata_grep "[Ss]tata"
 			cap rm `tmp'
-			qui shell ps aux | grep '[s]tata-mp' | wc -l > `tmp'
+			qui shell ps aux | grep '`stata_grep'' | wc -l > `tmp'
 			file open `fh' using `tmp', read
 			file read `fh' line
 			file close `fh'
@@ -186,23 +144,23 @@ program define dobatch, rclass
 			cap confirm integer number `num_stata_jobs'
 			if _rc {
 				di as error "Error counting the number of background Stata processes:"
-				di as error `"shell ps aux | grep '[s]tata-mp' | wc -l"'
+				di as error `"shell ps aux | grep '`stata_grep'' | wc -l"'
 				confirm integer number `num_stata_jobs'
 			}
 			local num_stata_jobs = `num_stata_jobs'-1
 		}
-		noi di "Background Stata MP jobs at $S_TIME: `num_stata_jobs'"
+		noi di "Background Stata jobs at $S_TIME: `num_stata_jobs'"
 
 		* If server is busy, wait a few minutes and try again
 		if `free_cpus' < `MIN_CPUS_AVAILABLE' | `num_stata_jobs' >= `MAX_STATA_JOBS' {
-			noi di "Waiting for at least `MIN_CPUS_AVAILABLE' available CPUs and fewer than `MAX_STATA_JOBS' background Stata MP jobs..."
+			noi di "Waiting for at least `MIN_CPUS_AVAILABLE' available CPUs and fewer than `MAX_STATA_JOBS' background Stata jobs..."
 			sleep `=1000*60*`WAIT_TIME_MINS''
 		}
 		else local check_cpus = 0
 	}
 
 	************************************************
-	* Run Stata MP in batch mode
+	* Run Stata in batch mode
 	************************************************
 	tempname stata_pid_fh
 	tempfile stata_pid_file
@@ -217,7 +175,7 @@ program define dobatch, rclass
 		qui shell powershell -NoProfile -Command "`ps_cmd'" > `stata_pid_file'
 	}
 	else {
-		local prefix "nohup stata-mp -b do"
+		local prefix `"nohup "`stata_exe'" -b do"'
 		local suffix "</dev/null >/dev/null 2>&1 & echo $! > `stata_pid_file'"
 
 		noi di _n `"sh -c '`prefix' \"`dofile'\" `args' `stop'`suffix''"'
@@ -239,6 +197,122 @@ program define dobatch, rclass
 	return scalar MIN_CPUS_AVAILABLE = `MIN_CPUS_AVAILABLE'
 	return scalar MAX_STATA_JOBS = `MAX_STATA_JOBS'
 	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'
+end
+
+
+program define _dobatch_get_exe, rclass
+
+	version 13.0
+
+	syntax [, EXE(string) ISwindows(integer 0)]
+
+	tempfile tmp
+
+	* Determine edition-specific executable names
+	* Use c(MP)/c(SE) as primary (reliable since Stata 9+)
+	* Use c(flavor) only to distinguish IC vs BE (available since Stata 14)
+	if c(MP)==1 {
+		local winexebase "StataMP"
+		local unixexename "stata-mp"
+		local macappname "StataMP"
+	}
+	else if c(SE)==1 {
+		local winexebase "StataSE"
+		local unixexename "stata-se"
+		local macappname "StataSE"
+	}
+	else {
+		* IC or BE: use c(flavor) to distinguish if available (Stata 14+), default to IC naming
+		if c(flavor)=="BE" {
+			local winexebase "StataBE"
+			local unixexename "stata"
+			local macappname "StataBE"
+		}
+		else {
+			local winexebase "Stata"
+			local unixexename "stata"
+			local macappname "Stata"
+		}
+	}
+
+	* If exe() is provided, try it first; otherwise auto-detect
+	if !mi("`exe'") {
+		cap confirm file "`exe'"
+		if !_rc {
+			return local stata_exe "`exe'"
+			exit
+		}
+		if `iswindows' {
+			local statadir = c(sysdir_stata)
+			cap confirm file "`statadir'`exe'"
+			if !_rc {
+				return local stata_exe "`statadir'`exe'"
+				exit
+			}
+			di as error "Executable not found: tried `exe' and `statadir'`exe'"
+			di as error "Specify a full absolute path with exe() if needed."
+			exit 601
+		}
+		else {
+			* Try PATH
+			cap rm `tmp'
+			qui shell sh -c 'command -v "`exe'" >/dev/null && touch `tmp''
+			cap confirm file `tmp'
+			if !_rc {
+				return local stata_exe "`exe'"
+				exit
+			}
+			di as error "Executable not found: tried `exe' as a file path and on PATH"
+			di as error "Specify a full absolute path with exe() if needed."
+			exit 601
+		}
+	}
+
+	* Auto-detect based on platform and edition
+	if `iswindows' {
+		local statadir = c(sysdir_stata)
+		cap confirm file "`statadir'`winexebase'-64.exe"
+		if !_rc {
+			return local stata_exe "`statadir'`winexebase'-64.exe"
+			exit
+		}
+		cap confirm file "`statadir'`winexebase'.exe"
+		if !_rc {
+			return local stata_exe "`statadir'`winexebase'.exe"
+			exit
+		}
+		di as error "`winexebase' executable not found in `statadir'"
+		di as error "Ensure `winexebase'-64.exe or `winexebase'.exe exists in the Stata installation directory."
+		di as error "Alternatively, specify the executable using the exe() option."
+		exit 601
+	}
+	else {
+		* Unix/macOS: try sysdir, then macOS .app bundle, then PATH
+		local statadir = c(sysdir_stata)
+		cap confirm file "`statadir'`unixexename'"
+		if !_rc {
+			return local stata_exe "`statadir'`unixexename'"
+			exit
+		}
+		* Try macOS .app bundle: <sysdir>/<AppName>.app/Contents/MacOS/<unixexename>
+		local mac_path "`statadir'`macappname'.app/Contents/MacOS/`unixexename'"
+		cap confirm file "`mac_path'"
+		if !_rc {
+			return local stata_exe "`mac_path'"
+			exit
+		}
+		* Fallback: try PATH
+		cap rm `tmp'
+		qui shell sh -c 'command -v `unixexename' >/dev/null && touch `tmp''
+		cap confirm file `tmp'
+		if !_rc {
+			return local stata_exe "`unixexename'"
+			exit
+		}
+		di as error "`unixexename' not found in `statadir' or on PATH."
+		di as error "Alternatively, specify the executable using the exe() option."
+		exit 601
+	}
 end
 
 ** EOF

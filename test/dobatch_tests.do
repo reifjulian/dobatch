@@ -32,7 +32,7 @@ global DOBATCH_MAX_STATA_JOBS = 8
 dobatch dofile1.do
 global DOBATCH_MAX_STATA_JOBS = 12
 
-* dobatch_wait default: wait until all Stata MP procs finish (requires nobody else using Stata MP!)
+* dobatch_wait default: wait until all Stata procs finish (requires nobody else using Stata!)
 rm test1.log
 dobatch dofile1.do
 assert !mi("$DOBATCH_STATA_PID")
@@ -70,16 +70,84 @@ confirm file test2.log
 
 assert r(MAX_STATA_JOBS)==12
 
+* exe(): filename only (looked up in Stata installation directory / PATH)
+if c(os)=="Windows" {
+	rm test1.log
+	dobatch dofile1.do, exe("StataMP-64.exe")
+	dobatch_wait
+	confirm file test1.log
+}
+
+* exe(): full absolute path
+if c(os)=="Windows" {
+	rm test1.log
+	dobatch dofile1.do, exe("`c(sysdir_stata)'StataMP-64.exe")
+	dobatch_wait
+	confirm file test1.log
+}
+
+* exe(): invalid name should produce an error
+cap dobatch dofile1.do, exe("nonexistent_stata.exe")
+assert _rc==601
+
+* exe() tests for macOS terminal (Unix on Macintosh)
+if c(os)=="Unix" & strpos(c(machine_type), "Macintosh") {
+
+	* Determine the correct executable name and app bundle name based on edition
+	if c(MP)==1 {
+		local unixexename "stata-mp"
+		local appname "StataMP"
+	}
+	else if c(SE)==1 {
+		local unixexename "stata-se"
+		local appname "StataSE"
+	}
+	else if c(flavor)=="BE" {
+		local unixexename "stata"
+		local appname "StataBE"
+	}
+	else {
+		local unixexename "stata"
+		local appname "Stata"
+	}
+
+	* exe(): filename only (looked up via PATH)
+	rm test1.log
+	dobatch dofile1.do, exe("`unixexename'")
+	dobatch_wait
+	confirm file test1.log
+
+	* exe(): full absolute path (executable is in app bundle's MacOS directory)
+	* Path structure: /Applications/Stata/StataMP.app/Contents/MacOS/stata-mp
+	local exepath "/Applications/Stata/`appname'.app/Contents/MacOS/`unixexename'"
+	cap confirm file "`exepath'"
+	if !_rc {
+		rm test1.log
+		dobatch dofile1.do, exe("`exepath'")
+		dobatch_wait
+		confirm file test1.log
+	}
+
+	* exe(): invalid name should produce an error
+	cap dobatch dofile1.do, exe("nonexistent_stata")
+	assert _rc==601
+}
+
 * Test DOBATCH_DISABLE mode
 global DOBATCH_DISABLE = 1
 dobatch dofile1.do
 global DOBATCH_DISABLE
 
 * Unix-only: expanding ~ to user's home directory
-* Note: for this example to work, the /dobatch folder must be placed in user's home directory
+* Note: requires dobatch folder to be located either in ~, ~/Github, or ~/Documents/Github
 if c(os)=="Unix" {
 	rm test1.log
-	dobatch "~/dobatch/test/dofile1.do"
+	
+	local pwd: pwd
+	if strpos("`pwd'","github/") local prefix "github/"
+	if strpos("`pwd'","Documents/GitHub/") local prefix "Documents/GitHub/"
+	
+	dobatch "~/`prefix'dobatch/test/dofile1.do"
 	sleep 8000
 	confirm file test1.log
 }

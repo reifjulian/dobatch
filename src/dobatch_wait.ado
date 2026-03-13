@@ -1,7 +1,7 @@
-*! dobatch_wait 1.1 28jan2026 by Julian Reif
+*! dobatch_wait 1.2 10mar2026 by Julian Reif
 
 * Helper program that waits for jobs to end. Two modes:
-*  (1) default: wait until all Stata MP jobs end (excluding this one)
+*  (1) default: wait until all Stata jobs end (excluding this one)
 *  (2) if process ID numbers (PIDs) are provided as input, wait until each one has ended
 program define dobatch_wait, rclass
 
@@ -14,13 +14,6 @@ program define dobatch_wait, rclass
 
 	* Detect platform
 	local is_windows = (c(os)=="Windows")
-	if !`is_windows' {
-		cap assert c(os)=="Unix"
-		if _rc {
-			noi di as error "dobatch_wait requires Windows or Unix"
-			exit 198
-		}
-	}
 
 	* PIDs must be positive integers. If not specified, pull PIDs from DOBATCH_STATA_PID
 	syntax [, pid(numlist >0 integer)]
@@ -65,10 +58,10 @@ program define dobatch_wait, rclass
 		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
 		while (`check_cpus'==1) {
 
-			* Count number of background Stata MP processes
+			* Count number of background Stata processes
 			if `is_windows' {
 				cap rm `tmp'
-				qui shell powershell -NoProfile -Command "@(Get-Process -Name 'StataMP*' -ErrorAction SilentlyContinue).Count" > `tmp'
+				qui shell powershell -NoProfile -Command "@(Get-Process -Name 'Stata*' -ErrorAction SilentlyContinue).Count" > `tmp'
 				file open `fh' using `tmp', read
 				file read `fh' line
 				file close `fh'
@@ -83,9 +76,10 @@ program define dobatch_wait, rclass
 				local num_stata_jobs = `num_stata_jobs'-1
 			}
 			else {
-				* Count number of background stata-mp processes. Subtract one to exclude the parent process (this script).
+				* Count background Stata processes via ps/grep (case-insensitive to catch both GUI and CLI processes)
+				local stata_grep "[Ss]tata"
 				cap rm `tmp'
-				qui shell ps aux | grep '[s]tata-mp' | wc -l > `tmp'
+				qui shell ps aux | grep '`stata_grep'' | wc -l > `tmp'
 				file open `fh' using `tmp', read
 				file read `fh' line
 				file close `fh'
@@ -97,11 +91,11 @@ program define dobatch_wait, rclass
 				}
 				else local num_stata_jobs = `num_stata_jobs'-1
 			}
-			noi di "Background Stata MP jobs at $S_TIME: `num_stata_jobs'"
+			noi di "Background Stata jobs at $S_TIME: `num_stata_jobs'"
 
 			* If server is busy, wait a few minutes and try again
 			if `num_stata_jobs' > 0 {
-				noi di "Waiting for background Stata MP jobs to end..."
+				noi di "Waiting for background Stata jobs to end..."
 				sleep `=1000*60*`WAIT_TIME_MINS''
 			}
 			else local check_cpus = 0
