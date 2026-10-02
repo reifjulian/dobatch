@@ -1,4 +1,4 @@
-*! dobatch 1.2 10mar2026 by Julian Reif
+*! dobatch 1.2.1 1oct2026 by Julian Reif
 
 program define dobatch, rclass
 
