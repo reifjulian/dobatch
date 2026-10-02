@@ -1,6 +1,6 @@
 # DOBATCH: Run Stata do-files in parallel
 
-- Current dobatch version: `1.2 10mar2026`
+- Current dobatch version: `1.2.1 1oct2026`
 - Jump to:  [`overview`](#overview) [`quickstart`](#quickstart) [`examples`](#example-running-scripts-in-parallel)
  [`advanced`](#advanced)  [`faq`](#faq) [`version history`](#version-history) [`author`](#author)
 
@@ -197,6 +197,7 @@ noi _print_timestamp
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 1.2.1 | 1 Oct 2026 | Fixed `dobatch_wait` error when DOBATCH_STATA_PID holds more than 2,500 PIDs ([#4](../../issues/4)); added `prune` option to `dobatch_wait` |
 | 1.2 | 10 Mar 2026 | Extended support to all Stata editions (SE, IC/BE); added `exe()` option; fixed macOS GUI issue |
 | 1.1 | 28 Jan 2026 | Added Windows support |
 | 1.0 | 4 Mar 2025 | Initial release (Unix/macOS, Stata MP) |

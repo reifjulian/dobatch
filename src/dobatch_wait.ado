@@ -1,4 +1,4 @@
-*! dobatch_wait 1.2 10mar2026 by Julian Reif
+*! dobatch_wait 1.2.1 1oct2026 by Julian Reif
 
 * Helper program that waits for jobs to end. Two modes:
 *  (1) default: wait until all Stata jobs end (excluding this one)
@@ -16,16 +16,29 @@ program define dobatch_wait, rclass
 	local is_windows = (c(os)=="Windows")
 
 	* PIDs must be positive integers. If not specified, pull PIDs from DOBATCH_STATA_PID
-	syntax [, pid(numlist >0 integer)]
+	syntax [, pid(numlist >0 integer) prune]
+
+	* prune: remove PIDs of finished jobs from DOBATCH_STATA_PID and exit
+	if !mi("`prune'") {
+		_dobatch_prune_pid
+		exit
+	}
+
 	if mi("`pid'") & !mi("$DOBATCH_STATA_PID") {
-		local 0 ", pid($DOBATCH_STATA_PID)"
-		cap syntax [, pid(numlist >0 integer)]
-		if _rc {
-			di as error "Error parsing the global variable DOBATCH_STATA_PID"
-			di as error "DOBATCH_STATA_PID must contain only positive integers"
-			exit 198
-		}
+
+		* Stata caps a numlist at 2,500 elements. If the global has grown large, first drop PIDs of finished jobs
+		if `: word count $DOBATCH_STATA_PID' > 1000 _dobatch_prune_pid
 		local pid_from_dobatch_stata_pid = 1
+
+		if !mi("$DOBATCH_STATA_PID") {
+			local 0 ", pid($DOBATCH_STATA_PID)"
+			cap syntax [, pid(numlist >0 integer)]
+			if _rc {
+				di as error "Error parsing the global variable DOBATCH_STATA_PID"
+				di as error "DOBATCH_STATA_PID must contain only positive integers and at most 2,500 elements"
+				exit 198
+			}
+		}
 	}
 
 	* Default wait time is 5 minutes
@@ -52,7 +65,7 @@ program define dobatch_wait, rclass
 	* Case 1: default behavior is waiting for all Stata jobs (except this one) to end
 	*   - Code duplicates dobatch, but checks only that `num_stata_jobs' > 0 and has different message
 	***
-	if mi("`pid'") {
+	if mi("`pid'") & mi("`pid_from_dobatch_stata_pid'") {
 
 		local check_cpus 1
 		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
@@ -106,10 +119,16 @@ program define dobatch_wait, rclass
 	* Case 2: user (or DOBATCH_STATA_PID) provides PIDs
 	***
 	else {
-		noi di "Wait for the following jobs to end: `pid'" _n
-
 		local check_cpus 1
 		if `WAIT_TIME_MINS'<=0 local check_cpus = 0
+
+		* If pruning removed every PID, there is nothing left to wait for
+		if mi("`pid'") {
+			noi di "All background jobs launched by dobatch have ended" _n
+			local check_cpus = 0
+		}
+		else noi di "Wait for the following jobs to end: `pid'" _n
+
 		while (`check_cpus'==1) {
 
 			cap rm `tmp'
@@ -135,6 +154,45 @@ program define dobatch_wait, rclass
 	* Return parameter values
 	return scalar WAIT_TIME_MINS = `WAIT_TIME_MINS'
 
+end
+
+
+* Remove PIDs of finished jobs from DOBATCH_STATA_PID
+*  - Lists all live Stata processes and keeps only the tracked PIDs that appear in that list.
+*  - The (possibly very long) PID list never goes on a command line, so no shell length limits apply.
+program define _dobatch_prune_pid
+
+	version 13.0
+
+	if mi("$DOBATCH_STATA_PID") exit
+
+	tempfile tmp
+	tempname fh
+
+	if c(os)=="Windows" {
+		qui shell powershell -NoProfile -Command "(Get-Process -Name 'Stata*' -ErrorAction SilentlyContinue).Id" > `tmp'
+	}
+	else {
+		qui shell ps aux | grep '[Ss]tata' | awk '{print $2}' > `tmp'
+	}
+
+	* Read live Stata PIDs, one per line
+	local live
+	file open `fh' using `tmp', read
+	file read `fh' line
+	while r(eof)==0 {
+		local live `live' `=trim("`line'")'
+		file read `fh' line
+	}
+	file close `fh'
+
+	* If the shell call produced nothing, leave the global untouched
+	if mi("`live'") exit
+
+	* Keep only tracked PIDs that are still alive
+	local pids $DOBATCH_STATA_PID
+	local pids : list pids & live
+	global DOBATCH_STATA_PID `pids'
 end
 
 ** EOF

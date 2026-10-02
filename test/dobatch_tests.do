@@ -138,6 +138,31 @@ global DOBATCH_DISABLE = 1
 dobatch dofile1.do
 global DOBATCH_DISABLE
 
+* Issue #4: more than 2,500 PIDs in DOBATCH_STATA_PID (Stata numlist limit). Dead PIDs get pruned.
+global DOBATCH_WAIT_TIME_MINS = 0
+global DOBATCH_STATA_PID ""
+forvalues i = 1/3000 {
+	global DOBATCH_STATA_PID "$DOBATCH_STATA_PID `=1000000+`i''"
+}
+dobatch_wait
+assert mi("$DOBATCH_STATA_PID")
+
+* Prune keeps live PIDs: a just-launched job (dofile1 sleeps 5 s) survives, dead one does not
+dobatch dofile1.do
+local pid = r(PID)
+global DOBATCH_STATA_PID "`pid' 1000001"
+dobatch_wait, prune
+assert "$DOBATCH_STATA_PID"=="`pid'"
+global DOBATCH_WAIT_TIME_MINS = 0.1
+dobatch_wait
+global DOBATCH_WAIT_TIME_MINS = 0
+
+* Bad content still errors
+global DOBATCH_STATA_PID "123 abc"
+cap dobatch_wait
+assert _rc==198
+global DOBATCH_STATA_PID ""
+
 * Unix-only: expanding ~ to user's home directory
 * Note: requires dobatch folder to be located either in ~, ~/Github, or ~/Documents/Github
 if c(os)=="Unix" {

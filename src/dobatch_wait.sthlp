@@ -8,7 +8,7 @@
 
 {title:Syntax}
 
-{p 8 14 2}{cmd:dobatch_wait} [, {cmd:pid(}{help numlist:numlist}{cmd:)}]
+{p 8 14 2}{cmd:dobatch_wait} [, {cmd:pid(}{help numlist:numlist}{cmd:)} {cmd:prune}]
 
 
 {title:Description}
@@ -19,6 +19,7 @@
 and waits for each process to complete.
 If DOBATCH_STATA_PID is undefined, {cmd:dobatch_wait} instead waits for all other active Stata processes (excluding the current one) to complete.
 Once complete, {cmd:dobatch_wait} clears the contents of DOBATCH_STATA_PID.
+If DOBATCH_STATA_PID contains more than 1,000 PIDs, {cmd:dobatch_wait} first removes the PIDs of jobs that have already finished.
 
 {p 8 8 2}2. If {cmd:pid(}{help numlist:numlist}{cmd:)} is specified, {cmd:dobatch_wait} waits for the specified PIDs to terminate. These may include any processes, not just Stata jobs.
 
@@ -28,6 +29,8 @@ Once complete, {cmd:dobatch_wait} clears the contents of DOBATCH_STATA_PID.
 {p 4 4 2}{cmd:pid(}{help numlist:numlist}{cmd:)} specifies one or more process identifiers (PIDs), which are unique numbers assigned by the operating system to each process.
 When this option is used, {cmd:dobatch_wait} pauses Stata until all specified PIDs have terminated.
 Note: the stored result {cmd:r(PID)} from {help rscript:rscript} (if installed) contains the PID of do-files launched with that command.
+
+{p 4 4 2}{cmd:prune} removes the PIDs of finished jobs from the global macro DOBATCH_STATA_PID and then exits without waiting.
 
 {p 4 4 2}The following global macros can be used to adjust the default settings:
 
