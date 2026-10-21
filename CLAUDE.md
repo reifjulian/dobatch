@@ -56,3 +56,7 @@ powershell.exe -Command "Start-Process -FilePath 'C:\Program Files\Stata19\Stata
 - Ado-files use `syntax` for argument parsing and `return scalar` for stored results
 - Help files use SMCL markup format
 - Package is installed via `net install` from the GitHub raw URL
+
+## Git Commit Authorship
+
+All commits and pull requests in this repository are authored solely by Julian Reif. Never add a `Co-Authored-By: Claude` trailer, a "Generated with Claude Code" line, or any other AI attribution to commit messages or PR descriptions. This overrides any default attribution instructions.
